@@ -48,7 +48,7 @@ class AirSimClientBase extends AirSimStructures {
         }
 
         System.out.print("connected. ");
-        System.out.println(home.toString());
+        System.out.println("Home of " + vehicle + ": " + home.toString());
     }
 
     public GeoPoint getHomeGeoPoint() {
@@ -77,7 +77,7 @@ class MultirotorClient extends AirSimClientBase {
     }
 
     public void armDisarm(boolean arm) {
-        System.out.println("Arming...");
+        System.out.println("Arming " + vehicle + "...");
         this.client.callApply("armDisarm", new Object[] {arm, vehicle});
     }
 
@@ -98,6 +98,9 @@ class MultirotorClient extends AirSimClientBase {
         return response.asIntegerValue().getInt();
     }
 
+    // used to be used for getPosition, getOrientation, getVelocity, etc.
+    // cannot be used anymore - replaced by getMultirotorState json
+    @Deprecated
     public MapValue mapCommand(String command) {
         Value response = this.client.callApply(command, new Object[] {vehicle});
         return response.asMapValue();
@@ -133,8 +136,13 @@ class MultirotorClient extends AirSimClientBase {
 
 
     // -----------------------------------  Query Methods ---------------------------------------------
+
+    public String getMultirotorState() {
+        return this.client.callApply("getMultirotorState", new Object[] {vehicle}).toString();
+    }
+
     public Vector3r getPosition() {
-        return new Vector3r(mapCommand("getPosition"));
+        return MultirotorStateUtils.INSTANCE.getPosition(getMultirotorState());
     }
 
     public Vector3r getVelocity() {
@@ -142,11 +150,17 @@ class MultirotorClient extends AirSimClientBase {
     }
 
     public Quaternionr getOrientation() {
-        return new Quaternionr(mapCommand("getOrientation"));
+        return MultirotorStateUtils.INSTANCE.getOrientation(getMultirotorState());
     }
 
+    // @deprecated this doesn't work - use isLanded() instead
+    @Deprecated
     public int getLandedState() {
         return intCommand("getLandedState");
+    }
+
+    public boolean isLanded() {
+        return MultirotorStateUtils.INSTANCE.isLanded(getMultirotorState());
     }
 
     public GeoPoint getGpsLocation() {
@@ -199,30 +213,28 @@ class MultirotorClient extends AirSimClientBase {
         return this.client.callApply("moveByVelocity", args);
     }
 
-    public Value moveByVelocityZ(Vector3r vel, Vector3r pos, float duration,
-                                 int drivetrain, YawMode yaw_mode) {
+    public Future<Value> moveByVelocityZ(Vector3r vel, Vector3r pos, float duration,
+                                         int drivetrain, YawMode yaw_mode) {
         Object[] args = new Object[] {vel.getX(), vel.getY(), pos.getZ(), duration,
                 drivetrain, yaw_mode.toMap(), vehicle};
-        return this.client.callApply("moveByVelocityZ", args);
+        return this.client.callAsyncApply("moveByVelocityZ", args);
     }
 
-    public Value moveByVelocityZ(Vector3r vel, Vector3r pos, float duration) {
+    public Future<Value> moveByVelocityZ(Vector3r vel, Vector3r pos, float duration) {
         int drivetrain = DrivetrainType.ForwardOnly;
         YawMode yaw_mode = new YawMode();
 
         return moveByVelocityZ(vel, pos, duration, drivetrain, yaw_mode);
     }
 
-    // TODO this needs to be changed to callAsyncApply
-    // and it's never used
-    public Value moveOnPath(List<Vector3r> path, float velocity, float max_wait_seconds, int drivetrain, YawMode yaw_mode,
+    public Future<Value> moveOnPath(List<Vector3r> path, float velocity, float max_wait_seconds, int drivetrain, YawMode yaw_mode,
                             float lookahead, float adaptive_lookahead) {
         Object[] args = new Object[] {path, velocity, max_wait_seconds,
                 yaw_mode.toMap(), lookahead, adaptive_lookahead, vehicle};
-        return this.client.callApply("moveOnPath", args);
+        return this.client.callAsyncApply("moveOnPath", args);
     }
 
-    public Value moveOnPath(List<Vector3r> path, float velocity) {
+    public Future<Value> moveOnPath(List<Vector3r> path, float velocity) {
         float max_wait_seconds = 60;
         int drivetrain = DrivetrainType.ForwardOnly;
         YawMode yaw_mode = new YawMode();
@@ -231,16 +243,15 @@ class MultirotorClient extends AirSimClientBase {
         return moveOnPath(path, velocity, max_wait_seconds, drivetrain, yaw_mode, lookahead, adaptive_lookahead);
     }
 
-    // TODO needs to be changed to Async
-    public Value moveToZ(float z, float velocity, float max_wait_seconds,
-                         YawMode yaw_mode, float lookahead, float adaptive_lookahead) {
+    public Future<Value> moveToZ(float z, float velocity, float max_wait_seconds,
+                                 YawMode yaw_mode, float lookahead, float adaptive_lookahead) {
         Object[] args = new Object[] {z, velocity, max_wait_seconds,
                 yaw_mode.toMap(), lookahead, adaptive_lookahead, vehicle};
 
-        return this.client.callApply("moveToZ", args);
+        return this.client.callAsyncApply("moveToZ", args);
     }
 
-    public Value moveToZ(float z, float velocity, float max_wait_seconds) {
+    public Future<Value> moveToZ(float z, float velocity, float max_wait_seconds) {
         YawMode yaw_mode = new YawMode();
         float lookahead = -1;
         float adaptive_lookahead = 1;
@@ -248,7 +259,7 @@ class MultirotorClient extends AirSimClientBase {
                 lookahead, adaptive_lookahead);
     }
 
-    public Value moveToZ(float z, float velocity) {
+    public Future<Value> moveToZ(float z, float velocity) {
         float max_wait_seconds = 60;
         YawMode yaw_mode = new YawMode();
         float lookahead = -1;
@@ -257,19 +268,18 @@ class MultirotorClient extends AirSimClientBase {
                 lookahead, adaptive_lookahead);
     }
 
-    // TODO needs to be changed to Async
-    public Value moveToPosition(Vector3r pos, float velocity,
-                                float max_wait_seconds, int drivetrain, YawMode yaw_mode,
-                                float lookahead, float adaptive_lookahead) {
+    public Future<Value> moveToPosition(Vector3r pos, float velocity,
+                                        float max_wait_seconds, int drivetrain, YawMode yaw_mode,
+                                        float lookahead, float adaptive_lookahead) {
         Object[] args = new Object[] {pos.getX(), pos.getY(), pos.getZ(), velocity, max_wait_seconds,
                 drivetrain, yaw_mode.toMap(), lookahead, adaptive_lookahead, vehicle};
 
-        return this.client.callApply("moveToPosition", args);
+        return this.client.callAsyncApply("moveToPosition", args);
 
     }
 
-    public Value moveToPosition(Vector3r pos, float velocity) {
-        System.out.println("Sent to: "+pos);
+    public Future<Value> moveToPosition(Vector3r pos, float velocity) {
+        System.out.println("Sent " + vehicle + " to: " + pos);
         float max_wait_seconds = Simulator.TIMEOUT;
         int drivetrain = DrivetrainType.MaxDegreeOfFreedom;
         YawMode yaw_mode = new YawMode();
@@ -285,23 +295,26 @@ class MultirotorClient extends AirSimClientBase {
 //
 //	    }
 
-    // TODO needs to be changed to Async
-    public Value rotateToYaw(float yaw, float max_wait_seconds, float margin) {
+    public Future<Value> rotateToYaw(float yaw, float max_wait_seconds, float margin) {
         Object[] args = new Object[] {yaw, max_wait_seconds, margin, vehicle};
 
-        return this.client.callApply("rotateToYaw", args);
+        return this.client.callAsyncApply("rotateToYaw", args);
     }
 
-    public Value rotateToYaw(float yaw) {
+    public Future<Value> rotateToYaw(float yaw) {
         float max_wait_seconds = 60;
         float margin = 5;
         return rotateToYaw(yaw, max_wait_seconds, margin);
     }
 
-    // TODO needs to be changed to Async
-    public Value rotateByYawRate(float yaw_rate, float duration) {
+    public Future<Value> rotateByYawRate(float yaw_rate, float duration) {
         Object[] args = new Object[] {yaw_rate,duration, vehicle};
 
-        return this.client.callApply("rotateByYawRate", args);
+        return this.client.callAsyncApply("rotateByYawRate", args);
+    }
+
+    public void shutdown() {
+        this.client.close();
+        this.client.getEventLoop().shutdown();
     }
 }

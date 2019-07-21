@@ -84,7 +84,7 @@ public class Simulator {
             case 1:
                 // Homicidal Chauffeur
                 evader = new AgileEvader(ipAddress, eVehicle, eMaxV);
-                pursuer = new ChauffeurPursuer(ipAddress, eVehicle, pMaxV, baseR);
+                pursuer = new ChauffeurPursuer(ipAddress, pVehicle, pMaxV, baseR);
                 break;
             case 2:
                 // Suicidal Pedestrian
@@ -136,7 +136,7 @@ public class Simulator {
         double theta_init = 0;
         eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), planeHeight);
 
-        String folderName = String.format("type-%d_g-%.3f_b-%.3f", gameType, gamma, beta);
+        String folderName = String.format("results/type-%d_g-%.3f_b-%.3f", gameType, gamma, beta);
         new File(folderName).mkdir();
 
         String folderPrefix = folderName+"/";
@@ -176,6 +176,7 @@ public class Simulator {
             start = System.currentTimeMillis();
             t = 0;
             while (!pursuer.gameOver() && !evader.gameOver() && (t < 60)) {
+                System.out.println("Time " + t);
                 evader.evade();
                 pursuer.pursue();
 
@@ -272,7 +273,7 @@ public class Simulator {
     private void setupPosition(DronePlayer drone, Vector3r initPos) throws InterruptedException {
         // Arm the drone and take off if not flying already
         System.out.println("Checking state and taking off...");
-        if (drone.getLandedState() != LandedState.Flying) {
+        if (drone.isLanded()) {
             drone.armDisarm(true);
             drone.takeoff(setupWaitTime);
         }

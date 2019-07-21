@@ -131,6 +131,12 @@ public class AirSimStructures {
             pos.put("z_val", z_val);
         }
 
+        public Vector3r(Point point) {
+            pos.put("x_val", point.getX_val());
+            pos.put("y_val", point.getY_val());
+            pos.put("z_val", point.getZ_val());
+        }
+
         public Vector3r() {
             this(0f, 0f, 0f);
         }
@@ -200,6 +206,11 @@ public class AirSimStructures {
 
         public Quaternionr(MapValue response) {
             super(response);
+        }
+
+        public Quaternionr(Quaternion q) {
+            super(q.getX_val(), q.getY_val(), q.getZ_val());
+            pos.put("w_val", q.getW_val());
         }
 
         public List<Float> getXYZW() {
