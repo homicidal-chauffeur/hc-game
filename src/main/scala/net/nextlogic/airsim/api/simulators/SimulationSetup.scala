@@ -1,4 +1,4 @@
-package net.nextlogic.airsim.api.simulations
+package net.nextlogic.airsim.api.simulators
 
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.utils.{Constants, Vector3r}
@@ -7,7 +7,7 @@ object SimulationSetup {
 
   def setup(evader: AirSimBaseClient, pursuer: AirSimBaseClient, captureL: Double): Unit = {
     // 2 * captureL * Math.cos(theta_init)
-    val evaderInitialPosition = Vector3r( (captureL * 2 * Math.cos(0)).toFloat, 0, Constants.altitude)
+    val evaderInitialPosition = Vector3r( (captureL * 2 * Math.cos(0)).toFloat, 0, Constants.altitude - Constants.planeHeight)
     val pursuerInitialPosition = Vector3r(0, 0, Constants.altitude)
 
     Array(evader, pursuer).foreach{vehicle =>

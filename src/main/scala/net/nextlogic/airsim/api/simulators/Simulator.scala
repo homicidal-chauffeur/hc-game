@@ -3,7 +3,7 @@ package net.nextlogic.airsim.api.simulators
 import net.nextlogic.airsim.api.simulations.{AgileSimulation, HomicidalChauffeurSimulation}
 import net.nextlogic.airsim.api.utils.Constants
 
-class Simulator extends App {
+object Simulator extends App {
   if (args.length != 3) {
     println("Please specify speed ratio (gamma), and radius ratio (beta).")
     System.exit(1)

@@ -11,7 +11,7 @@ object Constants {
   val altitude: Float = -30f
 
 
-  val planeHeight: Float = -6f
+  val planeHeight: Float = -10f
   val resetHeight: Float = -7f
   val setupVelocity = 10f
   val setupWaitTime = 20

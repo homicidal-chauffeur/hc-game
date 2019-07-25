@@ -2,12 +2,9 @@ package net.nextlogic.airsim.api.gameplay.agile
 
 import java.awt.geom.Point2D
 
-import net.nextlogic.airsim.api.gameplay.telemetry.PositionTracker
 import net.nextlogic.airsim.api.gameplay.{AirSimBaseClient, DronePlayer}
 
 case class AgileDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
-  val tracker = PositionTracker(vehicle)
-
   def steer(d: Double): Unit = {
     // player is agile, so angle can be changed abruptly
     println(s"${vehicle.settings.name}: Steering with theta $d")

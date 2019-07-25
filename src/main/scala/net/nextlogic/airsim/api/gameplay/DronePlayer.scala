@@ -7,7 +7,6 @@ import net.nextlogic.airsim.api.utils.{Constants, DriveTrainType, Vector3r, YawM
 
 trait DronePlayer {
   val vehicle: AirSimBaseClient
-  val tracker: PositionTracker
   var theta: Double = 0
 
   def move(): Unit = {
@@ -21,7 +20,6 @@ trait DronePlayer {
     )
     //		moveByAngle(-0.1f, 0f, -5f, (float) theta, dt);
     println(s"${vehicle.settings.name}: Moving by velocity $velocity and theta $theta")
-    tracker.updatePositionData()
   }
 
   // this need to be implemented in subclasses because it depends on agility

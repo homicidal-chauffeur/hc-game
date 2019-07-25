@@ -1,0 +1,72 @@
+package net.nextlogic.airsim.api.simulators.actors
+
+import java.awt.geom.Point2D
+
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
+import akka.event.Logging
+import akka.pattern.ask
+import akka.util.Timeout
+import net.nextlogic.airsim.api.gameplay.DronePlayer
+import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor
+import net.nextlogic.airsim.api.simulators.actors.PilotActor._
+
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
+
+
+object PilotActor {
+  def props(pilotType: PilotType, vehicle: DronePlayer, relativePositionActor: ActorRef): Props =
+    Props(new PilotActor(pilotType, vehicle, relativePositionActor))
+
+  case object Start
+  case object Stop
+  case object Reset
+  case class EvaderTimerKey(vehicle: DronePlayer)
+
+  trait PilotType
+  case object Evade extends PilotType
+  case object Pursue extends PilotType
+}
+
+class PilotActor(pilotType: PilotType, vehicle: DronePlayer, relativePositionActor: ActorRef) extends Actor with ActorLogging with Timers {
+  val logger = Logging(context.system, this)
+
+  implicit val timeout: Timeout = 1 second
+  implicit val executionContext: ExecutionContext = context.dispatcher
+
+  override def receive: Receive = stoppedReceive
+
+  def stoppedReceive: Receive = {
+    case Start =>
+      logger.debug(s"${vehicle.vehicle.settings.name}: Starting the game...")
+      timers.startPeriodicTimer(EvaderTimerKey(vehicle), pilotType, 100.millis)
+      context.become(startedReceive, discardOld = false)
+
+    case Reset =>
+      vehicle.vehicle.reset()
+  }
+
+  def startedReceive: Receive = {
+    case Stop =>
+      logger.debug(s"${vehicle.vehicle.settings.name}: Stopping the game...")
+      context.unbecome()
+    case Evade =>
+      (relativePositionActor ? RelativePositionActor.ForEvader(vehicle.theta))
+          .mapTo[Option[Point2D]].foreach{relativePositionOpt =>
+        relativePositionOpt.foreach { p =>
+          vehicle.evade(p)
+          logger.debug(s"${vehicle.vehicle.settings.name}: Evading with theta ${vehicle.theta} and relative position $p...")
+        }
+      }
+      timers.startSingleTimer(EvaderTimerKey(vehicle), Evade, 100.millis)
+    case Pursue =>
+      (relativePositionActor ? RelativePositionActor.ForPursuer(vehicle.theta))
+          .mapTo[Option[Point2D]].foreach{relativePositionOpt =>
+        relativePositionOpt.foreach { p =>
+          vehicle.pursue(p)
+          logger.debug(s"${vehicle.vehicle.settings.name}: Pursuing with theta ${vehicle.theta} and relative position $p...")
+        }
+      }
+      timers.startSingleTimer(EvaderTimerKey(vehicle), Pursue, 100.millis)
+  }
+}

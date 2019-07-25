@@ -7,8 +7,6 @@ import net.nextlogic.airsim.api.gameplay.telemetry.PositionTracker
 import net.nextlogic.airsim.api.utils.Constants
 
 case class ChauffeurDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
-  val tracker = PositionTracker(vehicle)
-
   override def steer(phi: Double): Unit = {
     val dtheta = phi * (vehicle.settings.maxVelocity / Constants.turningRadius)
     theta += dtheta * Constants.timeStepForAngleChange
