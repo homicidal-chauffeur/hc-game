@@ -8,6 +8,8 @@ object Constants {
   val pVehicle = "Pursuer"
 
   val moveDuration = 20f
+  val altitude: Float = -30f
+
 
   val planeHeight: Float = -6f
   val resetHeight: Float = -7f
@@ -16,10 +18,10 @@ object Constants {
   val TIMEOUT = 60f
 
 
-  val baseV = 3 // velocity of pursuer, m/s
+  val pursuerVelocity = 3 // velocity of pursuer, m/s
 
-  val baseR = 8 // turning radius of pursuer, m
-
+  val turningRadius = 8 // turning radius of pursuer, m
+  val timeStepForAngleChange = 0.1 //deltaT
 
   var gameType = 1 // game type
 

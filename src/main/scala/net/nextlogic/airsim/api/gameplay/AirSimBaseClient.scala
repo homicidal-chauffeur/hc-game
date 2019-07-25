@@ -74,6 +74,10 @@ case class AirSimBaseClient(settings: VehicleSettings) {
     this.client.callApply("armDisarm", Array[AnyRef](arm.asInstanceOf[AnyRef], settings.name))
   }
 
+  def reset(): Unit = {
+    println(s"${settings.name}: Resetting...")
+    this.client.callApply("reset", Array())
+  }
   // -----------------------------------  Query Methods ---------------------------------------------
 
   def getMultirotorState: String = this.client.callApply("getMultirotorState", Array(settings.name)).toString
