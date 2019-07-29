@@ -25,7 +25,7 @@ trait DronePlayer {
   // this need to be implemented in subclasses because it depends on agility
   def steer(d: Double)
 
-  def evade(relativePosition: Point2D)
+  def evade(relativePosition: Point2D, opponentTheta: Double)
 
-  def pursue(relativePosition: Point2D)
+  def pursue(relativePosition: Point2D, opponentTheta: Double)
 }

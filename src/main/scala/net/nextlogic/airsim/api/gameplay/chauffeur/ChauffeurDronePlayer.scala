@@ -13,7 +13,7 @@ case class ChauffeurDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     println(s"${vehicle.settings.name}: Steering with theta $theta")
   }
 
-  override def evade(relativePos: Point2D): Unit = {
+  override def evade(relativePos: Point2D, opponentTheta: Double): Unit = {
     val x = relativePos.getX
     val y = relativePos.getY
 
@@ -29,7 +29,7 @@ case class ChauffeurDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     move()
   }
 
-  def pursue(relativePos: Point2D): Unit = {
+  def pursue(relativePos: Point2D, opponentTheta: Double): Unit = {
     val x = relativePos.getX
     val y = relativePos.getY
     // control variable, which is effectively turning radius

@@ -2,16 +2,15 @@ package net.nextlogic.airsim.api.simulators.actors
 
 import java.awt.geom.{Line2D, Point2D}
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
+import akka.actor.{Actor, ActorLogging, Props, Timers}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.{NewPosition, Path}
+import net.nextlogic.airsim.api.results.{PathSegment, Visualizer}
 import net.nextlogic.airsim.api.simulators.actors.PilotActor.PilotType
 import net.nextlogic.airsim.api.simulators.actors.VisualizerActor._
 import net.nextlogic.airsim.visualizer.GlobalField
-import javax.swing.SwingUtilities
-import scala.collection.JavaConverters._
 
-import scala.collection.immutable.Queue
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 object VisualizerActor {
@@ -41,7 +40,9 @@ class VisualizerActor(val captureDistance: Double) extends Actor with ActorLoggi
       updatePlot(vis, pilotType, new Point2D.Double(position.x, position.y), line)
 
     case Path(pilotType, path) =>
-      setPath(vis, pilotType, path)
+      println(s"Path for $pilotType:")
+      println(path.map(p => s"(${p.getX},${p.getY})").mkString(", "))
+      // setPath(vis, pilotType, path)
     case Stop =>
       logger.debug("Stopping visualizer...")
       //context.unbecome()
@@ -51,6 +52,30 @@ class VisualizerActor(val captureDistance: Double) extends Actor with ActorLoggi
       // maybe save the image
   }
 
+  def startedReceiveNew(vis: Visualizer = Visualizer(captureDistance)): Receive = {
+    case NewPosition(position, pilotType) =>
+      val point = new Point2D.Double(position.x, position.y)
+      positions.put(pilotType, point)
+      updatePlotVisualizer(vis, pilotType, new Point2D.Double(position.x, position.y))
+
+    case Path(pilotType, path) =>
+      println(s"Path for $pilotType:")
+      println(path.map(p => s"(${p.getX},${p.getY})").mkString(", "))
+      // setPath(vis, pilotType, path)
+    case Stop =>
+      logger.debug("Stopping visualizer...")
+      //context.unbecome()
+
+      // val win = SwingUtilities.getWindowAncestor(vis)
+      // win.dispose()
+      // maybe save the image
+  }
+
+
+  def updatePlotVisualizer(vis: Visualizer, pilotType: PilotType, position: Point2D): Unit = {
+    vis.addSegment(PathSegment(pilotType, position))
+    vis.repaint()
+  }
 
   def updatePlot(vis: GlobalField, pilotType: PilotType, position: Point2D, lastMovement: Option[Line2D]): Unit = {
     if (pilotType == PilotActor.Evade) {

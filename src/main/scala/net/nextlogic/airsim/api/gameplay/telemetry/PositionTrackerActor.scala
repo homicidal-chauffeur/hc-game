@@ -47,7 +47,7 @@ class PositionTrackerActor(pilotType: PilotType, vehicle: AirSimBaseClient, obse
 
     case UpdatePosition =>
       positionVector = vehicle.getPosition
-      val pos = new Point2D.Double(positionVector.x, positionVector.x)
+      val pos = new Point2D.Double(positionVector.x, positionVector.y)
       lastPosition = currentPosition
       currentPosition = Some(pos)
       this.path.enqueue(pos)

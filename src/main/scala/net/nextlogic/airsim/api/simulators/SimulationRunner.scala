@@ -18,15 +18,15 @@ object SimulationRunner {
     val (evaderTracker, pursuerTracker) =
       initTrackers(evader, pursuer, Seq(relativePositionAct, visualizer), relativePositionAct, system)
 
-    val evaderPilot = system.actorOf(PilotActor.props(PilotActor.Evade, evader, relativePositionAct))
-    val pursuerPilot = system.actorOf(PilotActor.props(PilotActor.Pursue, pursuer, relativePositionAct))
+    val evaderPilot = system.actorOf(PilotActor.props(PilotActor.Evade, evader, pursuer, relativePositionAct))
+    val pursuerPilot = system.actorOf(PilotActor.props(PilotActor.Pursue, pursuer, evader, relativePositionAct))
 
     val gameSettings = GameSettings(
       Seq(evaderPilot, pursuerPilot),
       relativePositionAct,
       visualizer,
       captureDistance,
-      25.seconds
+      60.seconds
     )
 
     val referee = system.actorOf(RefereeActor.props(gameSettings))

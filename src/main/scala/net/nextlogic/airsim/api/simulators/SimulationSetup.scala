@@ -12,6 +12,7 @@ object SimulationSetup {
 
     Array(evader, pursuer).foreach{vehicle =>
       vehicle.confirmConnection()
+      println(s"${vehicle.settings.name}: Start Position ${vehicle.getPosition}")
 
       if (!vehicle.isApiControlEnabled) vehicle.enableApi(true)
 

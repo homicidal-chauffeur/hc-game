@@ -28,6 +28,7 @@ dependencies {
     implementation "com.typesafe.play:play-json_2.12:2.7.4"
     compile group: 'com.typesafe.akka', name: 'akka-actor_2.12', version: '2.5.23'
 
+    implementation "org.jfree:jfreesvg:3.4"
 
     implementation "net.java.jinput:jinput-platform:2.0.7"
 

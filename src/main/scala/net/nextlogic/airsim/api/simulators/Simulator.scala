@@ -1,6 +1,6 @@
 package net.nextlogic.airsim.api.simulators
 
-import net.nextlogic.airsim.api.simulations.{AgileSimulation, HomicidalChauffeurSimulation}
+import net.nextlogic.airsim.api.simulations.{AgileSimulation, HCMerzSimulation, HomicidalChauffeurSimulation}
 import net.nextlogic.airsim.api.utils.Constants
 
 object Simulator extends App {
@@ -28,6 +28,7 @@ object Simulator extends App {
   val simulation = gameType match {
     case 0 => AgileSimulation(settings)
     case 1 => HomicidalChauffeurSimulation(settings)
+    case 6 => HCMerzSimulation(settings)
     case _ => throw new Exception("Wrong simulation code")
   }
 

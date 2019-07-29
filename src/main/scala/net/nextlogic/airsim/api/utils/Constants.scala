@@ -1,14 +1,15 @@
 package net.nextlogic.airsim.api.utils
 
 object Constants {
-  val IP = "10.10.0.82"
+//  val IP = "10.10.0.82"
+  val IP = "35.244.105.17"
   val PORT = 41451
 
   val eVehicle = "Evader"
   val pVehicle = "Pursuer"
 
   val moveDuration = 20f
-  val altitude: Float = -30f
+  val altitude: Float = -20f
 
 
   val planeHeight: Float = -10f

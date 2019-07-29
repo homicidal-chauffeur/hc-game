@@ -12,7 +12,7 @@ case class RelativePositionTracker(evader: PositionTracker, pursuer: PositionTra
     RelativePosition.relativePosTo2D(evader.get2DPos, pursuer.get2DPos, theta)
 
   def gameOver: Boolean = {
-    val distance = evader.position.distance(pursuer.position)
+    val distance = evader.position.distance2D(pursuer.position)
     println(s"Distance: $distance < $captureRadius ? ${distance < captureRadius}")
     distance < captureRadius
   }

@@ -24,43 +24,50 @@ case object DriveTrainType {
   val forwardOnly: Int = 1
 }
 
-case class Vector3r(x: Float = 0f, y: Float = 0f, z: Float = 0f) {
+case class Vector3r(x: Double = 0f, y: Double = 0f, z: Double = 0f) {
   override def toString: String = s"[x, y, z] = [$x, $y, $z]"
 
-  def toMap: Map[String, Float] = Map("x_val" -> x, "y_val" -> y, "z_val" -> z)
+  def toMap: Map[String, Double] = Map("x_val" -> x, "y_val" -> y, "z_val" -> z)
 
   def distance(other: Vector3r): Double = {
-    val xDiff = other.x.toDouble - this.x
-    val yDiff = other.y.toDouble - this.y
-    val zDiff = other.z.toDouble - this.z
+    val xDiff = other.x - this.x
+    val yDiff = other.y - this.y
+    val zDiff = other.z - this.z
 
     Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff)
+  }
+
+  def distance2D(other: Vector3r): Double = {
+    val xDiff = other.x - this.x
+    val yDiff = other.y - this.y
+
+    Math.sqrt(xDiff * xDiff + yDiff * yDiff)
   }
 }
 
 object Vector3r {
   implicit val reads: Reads[Vector3r] = (
-    (__ \ "x_val").read[Float] and
-      (__ \ "y_val").read[Float] and
-      (__ \ "z_val").read[Float]
+    (__ \ "x_val").read[Double] and
+      (__ \ "y_val").read[Double] and
+      (__ \ "z_val").read[Double]
     )(Vector3r.apply _)
 }
 
-case class Quaternionr(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 1f) {
+case class Quaternionr(x: Double = 0f, y: Double = 0f, z: Double = 0f, w: Double = 1f) {
   override def toString: String = s"[x, y, z, w] = [$x, $y, $z, $w]"
 }
 
 object Quaternionr {
   implicit val reads: Reads[Quaternionr] = (
-    (__ \ "x_val").read[Float] and
-      (__ \ "y_val").read[Float] and
-      (__ \ "z_val").read[Float] and
-      (__ \ "w_val").read[Float]
+    (__ \ "x_val").read[Double] and
+      (__ \ "y_val").read[Double] and
+      (__ \ "z_val").read[Double] and
+      (__ \ "w_val").read[Double]
     )(Quaternionr.apply _)
 
 }
 
-case class GeoPoint(lat: Float = 0f, long: Float = 0f, alt: Float = 0) {
+case class GeoPoint(lat: Double = 0f, long: Double = 0f, alt: Double = 0) {
   def isZero: Boolean = lat == 0 && long == 0 && alt == 0
 
   override def toString: String = s"Lat=$lat, Long=$long, Alt=$alt"
@@ -74,9 +81,9 @@ object GeoPoint {
   )
 
   implicit val reads: Reads[GeoPoint] = (
-    (__ \ "latitude").read[Float] and
-      (__ \ "longitude").read[Float] and
-      (__ \ "altitude").read[Float]
+    (__ \ "latitude").read[Double] and
+      (__ \ "longitude").read[Double] and
+      (__ \ "altitude").read[Double]
     )(GeoPoint.apply _)
 
 }

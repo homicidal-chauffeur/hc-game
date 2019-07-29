@@ -11,7 +11,7 @@ case class AgileDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     theta = d
   }
 
-  def evade(relativePos: Point2D): Unit = {
+  def evade(relativePos: Point2D, opponentTheta: Double): Unit = {
     val x = relativePos.getX
     val y = relativePos.getY
 
@@ -21,7 +21,7 @@ case class AgileDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     move()
   }
 
-  def pursue(relativePos: Point2D): Unit = {
+  def pursue(relativePos: Point2D, opponentTheta: Double): Unit = {
     val x = relativePos.getX
     val y = relativePos.getY
 

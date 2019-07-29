@@ -15,8 +15,9 @@ import scala.concurrent.ExecutionContext
 
 
 object PilotActor {
-  def props(pilotType: PilotType, vehicle: DronePlayer, relativePositionActor: ActorRef): Props =
-    Props(new PilotActor(pilotType, vehicle, relativePositionActor))
+  // HCM needs access to opponent's theta
+  def props(pilotType: PilotType, vehicle: DronePlayer, opponent: DronePlayer, relativePositionActor: ActorRef): Props =
+    Props(new PilotActor(pilotType, vehicle, opponent, relativePositionActor))
 
   case object Start
   case object Stop
@@ -28,10 +29,10 @@ object PilotActor {
   case object Pursue extends PilotType
 }
 
-class PilotActor(pilotType: PilotType, vehicle: DronePlayer, relativePositionActor: ActorRef) extends Actor with ActorLogging with Timers {
+class PilotActor(pilotType: PilotType, vehicle: DronePlayer, opponent: DronePlayer, relativePositionActor: ActorRef) extends Actor with ActorLogging with Timers {
   val logger = Logging(context.system, this)
 
-  implicit val timeout: Timeout = 1 second
+  implicit val timeout: Timeout = 1.second
   implicit val executionContext: ExecutionContext = context.dispatcher
 
   override def receive: Receive = stoppedReceive
@@ -40,7 +41,7 @@ class PilotActor(pilotType: PilotType, vehicle: DronePlayer, relativePositionAct
     case Start =>
       logger.debug(s"${vehicle.vehicle.settings.name}: Starting the game...")
       timers.startPeriodicTimer(EvaderTimerKey(vehicle), pilotType, 100.millis)
-      context.become(startedReceive, discardOld = false)
+      context.become(startedReceive, discardOld = true)
 
     case Reset =>
       vehicle.vehicle.reset()
@@ -54,7 +55,7 @@ class PilotActor(pilotType: PilotType, vehicle: DronePlayer, relativePositionAct
       (relativePositionActor ? RelativePositionActor.ForEvader(vehicle.theta))
           .mapTo[Option[Point2D]].foreach{relativePositionOpt =>
         relativePositionOpt.foreach { p =>
-          vehicle.evade(p)
+          vehicle.evade(p, opponent.theta)
           logger.debug(s"${vehicle.vehicle.settings.name}: Evading with theta ${vehicle.theta} and relative position $p...")
         }
       }
@@ -63,7 +64,7 @@ class PilotActor(pilotType: PilotType, vehicle: DronePlayer, relativePositionAct
       (relativePositionActor ? RelativePositionActor.ForPursuer(vehicle.theta))
           .mapTo[Option[Point2D]].foreach{relativePositionOpt =>
         relativePositionOpt.foreach { p =>
-          vehicle.pursue(p)
+          vehicle.pursue(p, opponent.theta)
           logger.debug(s"${vehicle.vehicle.settings.name}: Pursuing with theta ${vehicle.theta} and relative position $p...")
         }
       }
