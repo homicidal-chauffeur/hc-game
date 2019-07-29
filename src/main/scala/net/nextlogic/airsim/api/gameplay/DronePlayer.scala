@@ -1,8 +1,5 @@
 package net.nextlogic.airsim.api.gameplay
 
-import java.awt.geom.Point2D
-
-import net.nextlogic.airsim.api.gameplay.telemetry.{PositionTracker, RelativePositionTracker}
 import net.nextlogic.airsim.api.utils.{Constants, DriveTrainType, Vector3r, YawMode}
 
 trait DronePlayer {
@@ -25,7 +22,7 @@ trait DronePlayer {
   // this need to be implemented in subclasses because it depends on agility
   def steer(d: Double)
 
-  def evade(relativePosition: Point2D, opponentTheta: Double)
+  def evade(relativePosition: Vector3r, opponentTheta: Double)
 
-  def pursue(relativePosition: Point2D, opponentTheta: Double)
+  def pursue(relativePosition: Vector3r, opponentTheta: Double)
 }

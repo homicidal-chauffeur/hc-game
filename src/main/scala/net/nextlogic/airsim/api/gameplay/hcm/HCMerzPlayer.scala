@@ -1,10 +1,7 @@
 package net.nextlogic.airsim.api.gameplay.hcm
 
-import java.awt.geom.Point2D
-
 import net.nextlogic.airsim.api.gameplay.{AirSimBaseClient, DronePlayer}
-import net.nextlogic.airsim.api.gameplay.telemetry.{PositionTracker, RelativePositionTracker}
-import net.nextlogic.airsim.api.utils.Constants
+import net.nextlogic.airsim.api.utils.{Constants, Vector3r}
 
 case class HCMerzPlayer(vehicle: AirSimBaseClient) extends DronePlayer {
   def steer(d: Double): Unit = {
@@ -19,11 +16,11 @@ case class HCMerzPlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     println(s"${vehicle.settings.name}: Steering with theta $theta")
   }
 
-  override def evade(relativePos: Point2D, opponentTheta: Double): Unit = {
+  override def evade(relativePos: Vector3r, opponentTheta: Double): Unit = {
     // val o = opponent.asInstanceOf[ChauffeurDronePlayer]
     val minR = Constants.turningRadius // o.getMinR
-    val x = relativePos.getX
-    val y = relativePos.getY
+    val x = relativePos.x
+    val y = relativePos.y
     System.out.println(s"E rel: x=$x, y=$y")
     var phi = .0
     if ((x * x + (y - minR) * (y - minR)) < minR * minR) {
@@ -42,9 +39,9 @@ case class HCMerzPlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     move()
   }
 
-  override def pursue(relativePosition: Point2D, opponentTheta: Double): Unit = {
-    val y = relativePosition.getY
-    val x = relativePosition.getX
+  override def pursue(relativePosition: Vector3r, opponentTheta: Double): Unit = {
+    val y = relativePosition.y
+    val x = relativePosition.x
 
     val phi = y match {
       case 0 if (x < 0) => 1

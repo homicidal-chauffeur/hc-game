@@ -40,8 +40,8 @@ class VisualizerActor(val captureDistance: Double) extends Actor with ActorLoggi
       updatePlot(vis, pilotType, new Point2D.Double(position.x, position.y), line)
 
     case Path(pilotType, path) =>
-      println(s"Path for $pilotType:")
-      println(path.map(p => s"(${p.getX},${p.getY})").mkString(", "))
+      logger.debug(s"Path for $pilotType:")
+      logger.debug("\n" + path.map(p => s"(${p.x},${p.y})").mkString(", "))
       // setPath(vis, pilotType, path)
     case Stop =>
       logger.debug("Stopping visualizer...")
@@ -60,7 +60,7 @@ class VisualizerActor(val captureDistance: Double) extends Actor with ActorLoggi
 
     case Path(pilotType, path) =>
       println(s"Path for $pilotType:")
-      println(path.map(p => s"(${p.getX},${p.getY})").mkString(", "))
+      println(path.map(p => s"(${p.x},${p.y})").mkString(", "))
       // setPath(vis, pilotType, path)
     case Stop =>
       logger.debug("Stopping visualizer...")

@@ -1,7 +1,5 @@
 package net.nextlogic.airsim.api.simulators.actors
 
-import java.awt.geom.Point2D
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.event.Logging
 import akka.pattern.ask
@@ -9,6 +7,7 @@ import akka.util.Timeout
 import net.nextlogic.airsim.api.gameplay.DronePlayer
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor
 import net.nextlogic.airsim.api.simulators.actors.PilotActor._
+import net.nextlogic.airsim.api.utils.Vector3r
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -53,7 +52,7 @@ class PilotActor(pilotType: PilotType, vehicle: DronePlayer, opponent: DronePlay
       context.unbecome()
     case Evade =>
       (relativePositionActor ? RelativePositionActor.ForEvader(vehicle.theta))
-          .mapTo[Option[Point2D]].foreach{relativePositionOpt =>
+          .mapTo[Option[Vector3r]].foreach{ relativePositionOpt =>
         relativePositionOpt.foreach { p =>
           vehicle.evade(p, opponent.theta)
           logger.debug(s"${vehicle.vehicle.settings.name}: Evading with theta ${vehicle.theta} and relative position $p...")
@@ -62,7 +61,7 @@ class PilotActor(pilotType: PilotType, vehicle: DronePlayer, opponent: DronePlay
       timers.startSingleTimer(EvaderTimerKey(vehicle), Evade, 100.millis)
     case Pursue =>
       (relativePositionActor ? RelativePositionActor.ForPursuer(vehicle.theta))
-          .mapTo[Option[Point2D]].foreach{relativePositionOpt =>
+          .mapTo[Option[Vector3r]].foreach{relativePositionOpt =>
         relativePositionOpt.foreach { p =>
           vehicle.pursue(p, opponent.theta)
           logger.debug(s"${vehicle.vehicle.settings.name}: Pursuing with theta ${vehicle.theta} and relative position $p...")

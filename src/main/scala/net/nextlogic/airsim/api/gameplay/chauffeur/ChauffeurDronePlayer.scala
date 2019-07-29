@@ -1,10 +1,7 @@
 package net.nextlogic.airsim.api.gameplay.chauffeur
 
-import java.awt.geom.Point2D
-
 import net.nextlogic.airsim.api.gameplay.{AirSimBaseClient, DronePlayer}
-import net.nextlogic.airsim.api.gameplay.telemetry.PositionTracker
-import net.nextlogic.airsim.api.utils.Constants
+import net.nextlogic.airsim.api.utils.{Constants, Vector3r}
 
 case class ChauffeurDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
   override def steer(phi: Double): Unit = {
@@ -13,9 +10,9 @@ case class ChauffeurDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     println(s"${vehicle.settings.name}: Steering with theta $theta")
   }
 
-  override def evade(relativePos: Point2D, opponentTheta: Double): Unit = {
-    val x = relativePos.getX
-    val y = relativePos.getY
+  override def evade(relativePos: Vector3r, opponentTheta: Double): Unit = {
+    val x = relativePos.x
+    val y = relativePos.y
 
     // control variable, which is effectively turning radius
     val phi = y match {
@@ -29,9 +26,9 @@ case class ChauffeurDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     move()
   }
 
-  def pursue(relativePos: Point2D, opponentTheta: Double): Unit = {
-    val x = relativePos.getX
-    val y = relativePos.getY
+  def pursue(relativePos: Vector3r, opponentTheta: Double): Unit = {
+    val x = relativePos.x
+    val y = relativePos.y
     // control variable, which is effectively turning radius
     println(s"${vehicle.settings.name}: relative distance ($x, $y)")
 

@@ -1,14 +1,14 @@
 package net.nextlogic.airsim.api.gameplay.telemetry
 
-import java.awt.geom.Point2D
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.NewPosition
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor._
 import net.nextlogic.airsim.api.simulators.actors.PilotActor
-import net.nextlogic.airsim.api.simulators.actors.PilotActor.PilotType
+import net.nextlogic.airsim.api.simulators.actors.PilotActor.{Evade, PilotType, Pursue}
 import net.nextlogic.airsim.api.utils.Vector3r
+
+import scala.collection.mutable
 
 
 object RelativePositionActor {
@@ -25,6 +25,7 @@ object RelativePositionActor {
 class RelativePositionActor() extends Actor with ActorLogging with Timers {
   val logger = Logging(context.system, this)
 
+  //  var positions: mutable.Map[PilotType, Vector3r] = mutable.Map[PilotType, Vector3r]()
   var positionEvader: Option[Vector3r] = None
   var positionPursuer: Option[Vector3r] = None
 
@@ -32,32 +33,13 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
 
   def startedReceive: Receive = {
     case ForPilotType(pilotType, theta) => // implement later
-
+      sender() ! calculateRelPosition(pilotType, theta)
 
     case ForEvader(theta) =>
-      if (positionPursuer.isDefined && positionPursuer.isDefined) {
-        sender() ! Some(
-          RelativePosition.relativePosTo2D(
-            toPoint(positionEvader),
-            toPoint(positionPursuer),
-            theta
-          )
-        )
-      } else {
-        sender() ! None
-      }
+      sender() ! calculateRelPosition(Evade, theta)
+
     case ForPursuer(theta) =>
-      if (positionPursuer.isDefined && positionPursuer.isDefined) {
-        sender() ! Some(
-          RelativePosition.relativePosTo2D(
-            toPoint(positionPursuer),
-            toPoint(positionEvader),
-            theta
-          )
-        )
-      } else {
-        sender() ! None
-      }
+      sender() ! calculateRelPosition(Pursue, theta)
 
     case Distance =>
       val dist = if (positionPursuer.isDefined && positionPursuer.isDefined) {
@@ -92,6 +74,24 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
       trackers.foreach(t => t ! PositionTrackerActor.Start)
   }
 
-  def toPoint(position: Option[Vector3r]): Point2D =
-    position.map(p => new Point2D.Double(p.x, p.y)).get
+  def calculateRelPosition(pilotType: PilotType, theta: Double): Option[Vector3r] =
+    if (positionPursuer.isDefined && positionPursuer.isDefined) {
+      val relPos = if (pilotType == Evade) {
+        RelativePosition.relativePosTo2D(
+          positionEvader.get,
+          positionPursuer.get,
+          theta
+        )
+      } else {
+        RelativePosition.relativePosTo2D(
+          positionPursuer.get,
+          positionEvader.get,
+          theta
+        )
+      }
+      Some(relPos)
+    } else {
+      None
+    }
+
 }

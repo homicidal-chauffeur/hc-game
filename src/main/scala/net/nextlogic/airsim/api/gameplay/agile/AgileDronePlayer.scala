@@ -1,8 +1,7 @@
 package net.nextlogic.airsim.api.gameplay.agile
 
-import java.awt.geom.Point2D
-
 import net.nextlogic.airsim.api.gameplay.{AirSimBaseClient, DronePlayer}
+import net.nextlogic.airsim.api.utils.Vector3r
 
 case class AgileDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
   def steer(d: Double): Unit = {
@@ -11,9 +10,9 @@ case class AgileDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     theta = d
   }
 
-  def evade(relativePos: Point2D, opponentTheta: Double): Unit = {
-    val x = relativePos.getX
-    val y = relativePos.getY
+  def evade(relativePos: Vector3r, opponentTheta: Double): Unit = {
+    val x = relativePos.x
+    val y = relativePos.y
 
     println(s"${vehicle.settings.name}: relative distance ($x, $y)")
 
@@ -21,9 +20,9 @@ case class AgileDronePlayer(vehicle: AirSimBaseClient) extends DronePlayer {
     move()
   }
 
-  def pursue(relativePos: Point2D, opponentTheta: Double): Unit = {
-    val x = relativePos.getX
-    val y = relativePos.getY
+  def pursue(relativePos: Vector3r, opponentTheta: Double): Unit = {
+    val x = relativePos.x
+    val y = relativePos.y
 
     steer(theta + Math.atan2(y, x))
     move()

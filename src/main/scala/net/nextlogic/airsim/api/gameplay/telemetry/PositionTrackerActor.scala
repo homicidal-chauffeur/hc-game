@@ -1,8 +1,5 @@
 package net.nextlogic.airsim.api.gameplay.telemetry
 
-import java.awt.geom.Point2D
-import java.util.UUID
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
@@ -24,7 +21,7 @@ object PositionTrackerActor {
 
   case class NewPosition(position: Vector3r, pilotType: PilotType)
 
-  case class Path(pilotType: PilotType, path: mutable.Queue[Point2D])
+  case class Path(pilotType: PilotType, path: mutable.Queue[Vector3r])
 
   case class PositionTrackerTimerKey(vehicle: AirSimBaseClient)
 }
@@ -32,9 +29,7 @@ object PositionTrackerActor {
 class PositionTrackerActor(pilotType: PilotType, vehicle: AirSimBaseClient, observers: Seq[ActorRef]) extends Actor with Timers with ActorLogging {
   val logger = Logging(context.system, this)
 
-  val path: mutable.Queue[Point2D] = mutable.Queue[Point2D]()
-  var lastPosition: Option[Point2D.Double] = None
-  var currentPosition: Option[Point2D.Double] = None
+  val path: mutable.Queue[Vector3r] = mutable.Queue[Vector3r]()
   var positionVector = Vector3r()
 
   override def receive: Receive = stoppedReceive
@@ -47,10 +42,7 @@ class PositionTrackerActor(pilotType: PilotType, vehicle: AirSimBaseClient, obse
 
     case UpdatePosition =>
       positionVector = vehicle.getPosition
-      val pos = new Point2D.Double(positionVector.x, positionVector.y)
-      lastPosition = currentPosition
-      currentPosition = Some(pos)
-      this.path.enqueue(pos)
+      this.path.enqueue(positionVector)
       timers.startSingleTimer(PositionTrackerTimerKey(vehicle), UpdatePosition, 100.millis)
 
       observers.foreach(o =>
@@ -62,7 +54,7 @@ class PositionTrackerActor(pilotType: PilotType, vehicle: AirSimBaseClient, obse
 
   def stoppedReceive: Receive = {
     case Start =>
-      context.become(startedReceive, discardOld = false)
+      context.become(startedReceive, discardOld = true)
       timers.startSingleTimer(PositionTrackerTimerKey(vehicle), UpdatePosition, 100.millis)
       logger.debug(s"${vehicle.settings.name}: Starting position tracker...")
     case GetPosition => sender() ! positionVector
