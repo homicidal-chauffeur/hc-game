@@ -7,13 +7,13 @@ import org.msgpack.rpc.Future;
 import org.msgpack.rpc.loop.EventLoop;
 import org.msgpack.type.MapValue;
 import org.msgpack.type.Value;
+import org.msgpack.value.ImmutableValue;
+import org.msgpack.value.ValueFactory;
 
 import java.net.UnknownHostException;
 import java.util.List;
 
-public class AirSimBase{
 
-}
 
 class AirSimClientBase extends AirSimStructures {
     protected Client client;
@@ -60,7 +60,7 @@ class AirSimClientBase extends AirSimStructures {
     // Basic flight control
     public void enableApiControl(boolean is_enabled) {
         System.out.println("Enabling api control for " + vehicle + "...");
-        Value response = this.client.callApply("enableApiControl", new Object[]{true, vehicle});
+        Value response = this.client.callApply("enableApiControl", new Object[]{is_enabled, vehicle});
 //        this.client.callApply("enableApiControl", new Object[] {true, vehicle});
     }
 
@@ -141,8 +141,15 @@ class MultirotorClient extends AirSimClientBase {
         return this.client.callApply("getMultirotorState", new Object[] {vehicle}).toString();
     }
 
+    public MapValue getMultirotorStateMap() {
+        return this.client.callApply("getMultirotorState", new Object[] {vehicle}).asMapValue();
+    }
+
     public Vector3r getPosition() {
-        return MultirotorStateUtils.INSTANCE.getPosition(getMultirotorState());
+        MapValue state = getMultirotorStateMap();
+        MapValue kinematics = state.get(state.keySet().toArray()[1]).asMapValue();
+        return new Vector3r(kinematics.get(kinematics.keySet().toArray()[0]).asMapValue());
+//        return MultirotorStateUtils.getPosition(getMultirotorState());
     }
 
     public Vector3r getVelocity() {
@@ -150,7 +157,12 @@ class MultirotorClient extends AirSimClientBase {
     }
 
     public Quaternionr getOrientation() {
-        return MultirotorStateUtils.INSTANCE.getOrientation(getMultirotorState());
+        MapValue state = getMultirotorStateMap();
+        // ValueFactory.
+        MapValue kinematics = state.get(state.keySet().toArray()[1]).asMapValue();
+
+        return new Quaternionr(kinematics.get(kinematics.keySet().toArray()[1]).asMapValue());
+//        return MultirotorStateUtils.getOrientation(getMultirotorState());
     }
 
     // @deprecated this doesn't work - use isLanded() instead
@@ -160,7 +172,10 @@ class MultirotorClient extends AirSimClientBase {
     }
 
     public boolean isLanded() {
-        return MultirotorStateUtils.INSTANCE.isLanded(getMultirotorState());
+        MapValue state = getMultirotorStateMap();
+
+        return state.get(state.keySet().toArray()[4]).asIntegerValue().getInt() == 0;
+//        return MultirotorStateUtils.isLanded(getMultirotorState());
     }
 
     public GeoPoint getGpsLocation() {
@@ -190,6 +205,9 @@ class MultirotorClient extends AirSimClientBase {
         return booleanCommand("isSimulationMode");
     }
 
+    public void reset() {
+        this.client.callApply("reset", new Object[]{});
+    }
 
     // -----------------------------------  APIs for control ---------------------------------------------
     public Value moveByAngle(float pitch, float roll, float z,
@@ -272,7 +290,9 @@ class MultirotorClient extends AirSimClientBase {
                                         float max_wait_seconds, int drivetrain, YawMode yaw_mode,
                                         float lookahead, float adaptive_lookahead) {
         Object[] args = new Object[] {pos.getX(), pos.getY(), pos.getZ(), velocity, max_wait_seconds,
-                drivetrain, yaw_mode.toMap(), lookahead, adaptive_lookahead, vehicle};
+                drivetrain, yaw_mode.toMap(),
+                lookahead, adaptive_lookahead,
+                vehicle};
 
         return this.client.callAsyncApply("moveToPosition", args);
 

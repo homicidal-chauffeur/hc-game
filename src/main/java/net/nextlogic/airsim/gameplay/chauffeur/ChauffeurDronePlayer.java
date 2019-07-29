@@ -22,6 +22,8 @@ public class ChauffeurDronePlayer extends DronePlayer {
     public void steer(double phi) {
         double dtheta = phi*(maxV/minR);
         theta += dtheta*deltaT;
+
+        System.out.println(vehicle + ": Steering with theta " + theta);
     }
 
     public void move() {

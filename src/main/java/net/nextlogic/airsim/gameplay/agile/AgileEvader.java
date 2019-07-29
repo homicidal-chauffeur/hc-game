@@ -40,7 +40,7 @@ public class AgileEvader extends AgileDronePlayer implements Evader {
 
     public void evade() {
         Point2D relativePos = getCurrentRelativePos();
-
+        System.out.println("Evader relative position: " + relativePos);
         double x = relativePos.getX();
         double y = relativePos.getY();
 

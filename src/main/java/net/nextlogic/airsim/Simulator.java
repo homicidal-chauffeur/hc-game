@@ -20,10 +20,11 @@ import net.nextlogic.airsim.visualizer.GlobalField;
 
 public class Simulator {
     public final static float planeHeight = -6f;
-    public final static float resetHeight = -7f;
     public final static float setupVelocity = 10f;
     public final static float setupWaitTime = 10f;
     public final static float TIMEOUT = 60f;
+
+    public final static float altitude = -30;
 
 
     public final static double baseV = 3; // velocity of pursuer, m/s
@@ -35,7 +36,7 @@ public class Simulator {
 
 
 
-    public static Vector3r eInitPos = new Vector3r(0, 0, 0);
+    public static Vector3r eInitPos = new Vector3r(0, 0, altitude);
     private double captureL;
     private DronePlayer pursuer;
     private DronePlayer evader;
@@ -68,8 +69,8 @@ public class Simulator {
         this.beta = b;
 
         String ipAddress = "10.10.0.82"; // localhost
-        String eVehicle = "Drone1";
-        String pVehicle = "Drone2";
+        String eVehicle = "Evader";
+        String pVehicle = "Pursuer";
 
         // player maximum velocities
         double eMaxV = gamma * baseV;
@@ -134,7 +135,8 @@ public class Simulator {
         double r_init = rNum*captureL;
         int count = 0;
         double theta_init = 0;
-        eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), planeHeight);
+        // eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), planeHeight);
+        eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), 0.0f, altitude);
 
         String folderName = String.format("results/type-%d_g-%.3f_b-%.3f", gameType, gamma, beta);
         new File(folderName).mkdir();
@@ -155,7 +157,7 @@ public class Simulator {
         //int count = 0;
         double start;
         PrintWriter resultFile = new PrintWriter(folderPrefix+"data.txt", "UTF-8");
-        while (count < 50) {
+        while (count < 1) { // was 50
             evader.setTheta(Math.acos(gamma));
             pursuer.setTheta(0);
 
@@ -187,7 +189,7 @@ public class Simulator {
             }
 
             double totalTime = (System.currentTimeMillis() - start)/1000;
-            //System.out.println("Time is: "+totalTime+" seconds");
+            System.out.println("Time is: "+totalTime+" seconds");
 
             evader.hover();
             pursuer.hover();
@@ -207,7 +209,13 @@ public class Simulator {
                     gameType, gamma, beta, r_init, theta_init, caught, totalTime, pursuerSimInit, evaderSimInit);
             System.out.print(testResult);
 
-            resultFile.write(testResult);
+            resultFile.println(testResult);
+            evader.printPath("evader", resultFile);
+            pursuer.printPath("pursuer", resultFile);
+            evader.printSteeringDecisions("Evader", resultFile);
+            pursuer.printSteeringDecisions("Pursuer", resultFile);
+
+
             resultFile.flush();
 
             vis.clearAll();
@@ -215,17 +223,18 @@ public class Simulator {
             evader.clearPath();
             pursuer.clearPath();
 
+
             count++;
 
             r_init = (Math.floorDiv(count, 5) + rNum) * captureL;
             theta_init = Math.floorDiv(count, 5)*2*Math.PI + Math.floorMod(count,  5)*Math.PI/4;
-            eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), planeHeight);
-            reset(eInitPos);
+            eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), planeHeight - 100);
+            // reset(eInitPos);
 
-            Thread.sleep((long) TIMEOUT*1000);
+            //Thread.sleep((long) TIMEOUT*1000);
         }
 
-
+        evader.reset();
 
         resultFile.close();
     }
@@ -266,15 +275,18 @@ public class Simulator {
 
     public void setupPositions(Vector3r evaderInitPos) throws InterruptedException {
         System.out.println("Setting up positions...");
-        setupPosition(pursuer, new Vector3r(0, 0, planeHeight));
+        setupPosition(pursuer, new Vector3r(0, 0, altitude));
         setupPosition(evader, evaderInitPos);
+        // wait for the drone to travel so the initial position is updated correctly
+        System.out.println("Waiting for the drones to reach the initial position...");
+        Thread.sleep((long) (setupWaitTime * 1000));
     }
 
     private void setupPosition(DronePlayer drone, Vector3r initPos) throws InterruptedException {
         // Arm the drone and take off if not flying already
         System.out.println("Checking state and taking off...");
         if (drone.isLanded()) {
-            drone.armDisarm(true);
+            // drone.armDisarm(true); they are armed from config file
             drone.takeoff(setupWaitTime);
         }
 
@@ -282,8 +294,6 @@ public class Simulator {
         System.out.println("Moving to initial position...");
         drone.moveToPosition(initPos, setupVelocity);
 
-        // wait for the drone to travel so the initial position is updated correctly
-        Thread.sleep((long) (setupWaitTime * 1000));
         drone.updatePositionData();
     }
 //
@@ -300,7 +310,7 @@ public class Simulator {
 //    }
 
     private void reset(Vector3r evaderInitPos) throws InterruptedException {
-        Vector3r pStartPoint = new Vector3r(0, 0, planeHeight);
+        Vector3r pStartPoint = new Vector3r(0, 0, altitude);
 
 //    	Point2D eDiff = evader.getRelativePos(new Point2D.Double(evaderInitPos.getX(),
 //    			evaderInitPos.getY()));
@@ -309,7 +319,7 @@ public class Simulator {
 //    	double pDist = pursuer.get2DPos().distance(0, 0);
 
         Point2D pPos = pursuer.get2DPos();
-        pursuer.moveToPosition(new Vector3r((float) pPos.getX(), (float) pPos.getY(), -8), setupVelocity);
+        pursuer.moveToPosition(new Vector3r((float) pPos.getX(), (float) pPos.getY(), altitude), setupVelocity);
 
 //    	if (eDist > pDist) {
         evader.moveToPosition(evaderInitPos, setupVelocity);

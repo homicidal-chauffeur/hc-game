@@ -53,6 +53,7 @@ public class HCMerzPursuer extends ChauffeurDronePlayer implements Evader {
             phi = Math.signum(y);
         }
 
+        steeringDecisions.add(new SteeringDecision(relativePos, phi, opponent.getTheta()));
 
         steer(phi);
         super.move();

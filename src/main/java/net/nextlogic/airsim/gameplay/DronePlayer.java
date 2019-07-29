@@ -2,6 +2,8 @@ package net.nextlogic.airsim.gameplay;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.PrintWriter;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +17,40 @@ public class DronePlayer extends MultirotorClient implements Pursuer, Evader {
 
     protected DronePlayer opponent; // opponent of the player
     protected double captureL; // capture radius
+
+    public ArrayList<SteeringDecision> steeringDecisions = new ArrayList<>();
+
+    public class SteeringDecision {
+        private Point2D relativePosition;
+        private Double opponentTheta;
+        private Double phi;
+
+        public SteeringDecision(Point2D relativePosition, Double phi, Double opponentTheta) {
+            this.relativePosition = relativePosition;
+            this.phi = phi;
+            this.opponentTheta = opponentTheta;
+        }
+
+        @Override
+        public String toString() {
+            return relativePosition.getX() + "," + relativePosition.getY() + "," + phi + "," + opponentTheta;
+        }
+    }
+
+    public void printSteeringDecisions(String name, PrintWriter resultsFile) {
+        resultsFile.println("Steering decisions for " + name);
+        for (SteeringDecision d : steeringDecisions ) {
+            resultsFile.println(d.toString());
+        }
+    }
+
+    public void printPath(String name, PrintWriter resultsFile) {
+        resultsFile.print(name + "_path = [");
+        for (Point2D point : path) {
+            resultsFile.print("[" + point.getX() + "," + point.getY() + "],");
+        }
+        resultsFile.print("]");
+    }
 
     public DronePlayer(String ip, String vehicle, double v) throws UnknownHostException {
         super(ip, vehicle);
@@ -106,7 +142,9 @@ public class DronePlayer extends MultirotorClient implements Pursuer, Evader {
 
     public boolean gameOver() {
         if ((opponent != null) && (captureL >= 0)) {
-            return (position.distance(opponent.getPos()) < captureL);
+            double distance = position.distance(opponent.getPos());
+            System.out.println("Distance: " + distance + " captureL: " + captureL );
+            return (distance < captureL);
         }
 
         return false;

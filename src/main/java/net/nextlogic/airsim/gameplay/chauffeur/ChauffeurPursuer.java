@@ -59,7 +59,7 @@ public class ChauffeurPursuer extends ChauffeurDronePlayer implements Pursuer {
 
     public void pursue() {
         Point2D relativePos = getCurrentRelativePos();
-
+        System.out.println("Pursuer relative position: " + relativePos);
         double x = relativePos.getX();
         double y = relativePos.getY();
 

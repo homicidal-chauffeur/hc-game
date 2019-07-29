@@ -124,6 +124,10 @@ public class GlobalField extends JPanel implements KeyListener {
         }
     }
 
+    public List<Line2D> getPursuerPath() {
+        return pursuerPath;
+    }
+
     /**
      * Sets evader segments to draw
      * @param input List of Point2D
@@ -133,6 +137,10 @@ public class GlobalField extends JPanel implements KeyListener {
         for (int i = 0; i < input.size() - 1; i++) {
             evaderPath.add(new Line2D.Float(input.get(i), input.get(i + 1)));
         }
+    }
+
+    public List<Line2D> getEvaderPath() {
+        return evaderPath;
     }
 
     /**

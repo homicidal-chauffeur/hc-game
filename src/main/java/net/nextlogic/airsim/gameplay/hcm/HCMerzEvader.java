@@ -60,6 +60,8 @@ public class HCMerzEvader extends AgileDronePlayer implements Evader {
             phi = pTheta + Math.atan2(y, x);
         }
 
+        steeringDecisions.add(new SteeringDecision(relativePos, phi, pTheta));
+
         steer(phi);
         super.move();
     }
