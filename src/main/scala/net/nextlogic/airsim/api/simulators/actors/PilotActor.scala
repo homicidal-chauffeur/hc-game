@@ -7,6 +7,7 @@ import akka.util.Timeout
 import net.nextlogic.airsim.api.gameplay.DronePlayer
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor
 import net.nextlogic.airsim.api.simulators.actors.PilotActor._
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
 import net.nextlogic.airsim.api.utils.Vector3r
 
 import scala.concurrent.duration._
@@ -23,9 +24,6 @@ object PilotActor {
   case object Reset
   case class EvaderTimerKey(vehicle: DronePlayer)
 
-  trait PilotType
-  case object Evade extends PilotType
-  case object Pursue extends PilotType
 }
 
 class PilotActor(pilotType: PilotType, vehicle: DronePlayer, opponent: DronePlayer, relativePositionActor: ActorRef) extends Actor with ActorLogging with Timers {

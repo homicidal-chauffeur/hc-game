@@ -6,8 +6,9 @@ import akka.actor.{Actor, ActorLogging, Props, Timers}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.{NewPosition, Path}
 import net.nextlogic.airsim.api.results.{PathSegment, Visualizer}
-import net.nextlogic.airsim.api.simulators.actors.PilotActor.PilotType
 import net.nextlogic.airsim.api.simulators.actors.VisualizerActor._
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
+import net.nextlogic.airsim.api.utils.Vector3r
 import net.nextlogic.airsim.visualizer.GlobalField
 
 import scala.collection.JavaConverters._
@@ -56,7 +57,7 @@ class VisualizerActor(val captureDistance: Double) extends Actor with ActorLoggi
     case NewPosition(position, pilotType) =>
       val point = new Point2D.Double(position.x, position.y)
       positions.put(pilotType, point)
-      updatePlotVisualizer(vis, pilotType, new Point2D.Double(position.x, position.y))
+      updatePlotVisualizer(vis, pilotType, position)
 
     case Path(pilotType, path) =>
       println(s"Path for $pilotType:")
@@ -72,13 +73,13 @@ class VisualizerActor(val captureDistance: Double) extends Actor with ActorLoggi
   }
 
 
-  def updatePlotVisualizer(vis: Visualizer, pilotType: PilotType, position: Point2D): Unit = {
+  def updatePlotVisualizer(vis: Visualizer, pilotType: PilotType, position: Vector3r): Unit = {
     vis.addSegment(PathSegment(pilotType, position))
     vis.repaint()
   }
 
   def updatePlot(vis: GlobalField, pilotType: PilotType, position: Point2D, lastMovement: Option[Line2D]): Unit = {
-    if (pilotType == PilotActor.Evade) {
+    if (pilotType == Evade) {
       vis.setEvaderState(position, 0)
       lastMovement.foreach(line => vis.addEvaderSegment(line))
     } else {
@@ -93,7 +94,7 @@ class VisualizerActor(val captureDistance: Double) extends Actor with ActorLoggi
   def setPath(vis: GlobalField, pilotType: PilotType, path: mutable.Queue[Point2D]): Unit = {
     val asList = path.toList.asJava
     logger.debug(s"Setting path for $pilotType with ${asList.size()} elements")
-    if (pilotType == PilotActor.Evade) {
+    if (pilotType == Evade) {
       vis.setEvaderPath(asList)
     } else {
       vis.setPursuerPath(asList)

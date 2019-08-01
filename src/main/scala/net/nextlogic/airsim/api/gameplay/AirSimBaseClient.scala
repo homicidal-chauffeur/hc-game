@@ -8,8 +8,8 @@ import org.msgpack.rpc.{Client, Future}
 import org.msgpack.rpc.loop.EventLoop
 import play.api.libs.json.Json
 
-case class AirSimBaseClient(settings: VehicleSettings) {
-  val client = new Client(settings.ip, PORT, EventLoop.start(new MessagePack))
+case class AirSimBaseClient(ip: String, settings: VehicleSettings) {
+  val client = new Client(ip, PORT, EventLoop.start(new MessagePack))
 
   def ping: Boolean = {
     val response = this.client.callApply("ping", Array())

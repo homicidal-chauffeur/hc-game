@@ -1,6 +1,5 @@
 package net.nextlogic.airsim.gameplay.agile;
 
-import net.nextlogic.airsim.gameplay.DronePlayer;
 import net.nextlogic.airsim.gameplay.Evader;
 import net.nextlogic.airsim.gameplay.chauffeur.ChauffeurDronePlayer;
 

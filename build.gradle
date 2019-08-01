@@ -20,13 +20,16 @@ repositories {
 
 dependencies {
     implementation 'org.scala-lang:scala-library:2.12.8'
+    testCompile group: 'org.scalatest', name: 'scalatest_2.12', version: '3.0.8'
 
     implementation "org.msgpack:msgpack-core:0.8.13"
     implementation "com.github.stampery:msgpack-rpc:0.7.1"
 
 
     implementation "com.typesafe.play:play-json_2.12:2.7.4"
+
     compile group: 'com.typesafe.akka', name: 'akka-actor_2.12', version: '2.5.23'
+    testCompile group: 'com.typesafe.akka', name: 'akka-testkit_2.12', version: '2.5.23'
 
     implementation "org.jfree:jfreesvg:3.4"
 
@@ -36,6 +39,11 @@ dependencies {
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile group: 'junit', name: 'junit', version: '4.12'
+
+
+    compile group: 'org.scala-lang.modules', name: 'scala-swing_2.12', version: '2.1.1'
+
+
 
 //    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 //    implementation 'com.beust:klaxon:5.0.1'
@@ -51,6 +59,13 @@ jar {
 application {
     mainClassName = 'net.nextlogic.airsim.Simulator'
 }
+
+task spec(dependsOn: ['testClasses'], type: JavaExec) {
+    main = 'org.scalatest.tools.Runner'
+    args = ['-R', 'build/classes/test', '-o']
+    classpath = sourceSets.test.runtimeClasspath
+}
+
 //compileKotlin {
 //    kotlinOptions.jvmTarget = "1.8"
 //}

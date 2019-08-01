@@ -4,8 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.NewPosition
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor._
-import net.nextlogic.airsim.api.simulators.actors.PilotActor
-import net.nextlogic.airsim.api.simulators.actors.PilotActor.{Evade, PilotType, Pursue}
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
 import net.nextlogic.airsim.api.utils.Vector3r
 
 import scala.collection.mutable
@@ -52,7 +51,7 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
 
 
     case NewPosition(position, pilotType) =>
-      if (pilotType == PilotActor.Evade)
+      if (pilotType == Evade)
         positionEvader = Some(position)
       else
         positionPursuer = Some(position)

@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor._
-import net.nextlogic.airsim.api.simulators.actors.PilotActor.PilotType
-import net.nextlogic.airsim.api.utils.Vector3r
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings.PilotType
+import net.nextlogic.airsim.api.utils.{Constants, Vector3r}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -43,7 +43,7 @@ class PositionTrackerActor(pilotType: PilotType, vehicle: AirSimBaseClient, obse
     case UpdatePosition =>
       positionVector = vehicle.getPosition
       this.path.enqueue(positionVector)
-      timers.startSingleTimer(PositionTrackerTimerKey(vehicle), UpdatePosition, 100.millis)
+      timers.startSingleTimer(PositionTrackerTimerKey(vehicle), UpdatePosition, Constants.locationUpdateDelay.millis)
 
       observers.foreach(o =>
           o ! NewPosition(positionVector, pilotType)
@@ -55,7 +55,7 @@ class PositionTrackerActor(pilotType: PilotType, vehicle: AirSimBaseClient, obse
   def stoppedReceive: Receive = {
     case Start =>
       context.become(startedReceive, discardOld = true)
-      timers.startSingleTimer(PositionTrackerTimerKey(vehicle), UpdatePosition, 100.millis)
+      timers.startSingleTimer(PositionTrackerTimerKey(vehicle), UpdatePosition, Constants.locationUpdateDelay.millis)
       logger.debug(s"${vehicle.settings.name}: Starting position tracker...")
     case GetPosition => sender() ! positionVector
   }

@@ -2,13 +2,14 @@ package net.nextlogic.airsim.api.utils
 
 import java.util
 
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
 import org.msgpack.`type`.MapValue
 import play.api.libs.json.{Reads, __}
 import play.api.libs.functional.syntax._
 
 import scala.collection.JavaConverters._
 
-case class VehicleSettings(ip: String, name: String, maxVelocity: Double, turningRadius: Double = 0)
+case class VehicleSettings(name: String, vehicleType: PilotType, maxVelocity: Double, turningRadius: Double = 0)
 
 case class YawMode(isRate: Boolean = true, yawOrRate: Float = 0f) {
 

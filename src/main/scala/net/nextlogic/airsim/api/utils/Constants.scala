@@ -18,6 +18,11 @@ object Constants {
   val setupWaitTime = 20
   val TIMEOUT = 60f
 
+  val locationUpdateDelay = 100
+
+  val defaultGamma = 0.5
+  val defaultBeta = 0.8
+
 
   val pursuerVelocity = 3 // velocity of pursuer, m/s
 

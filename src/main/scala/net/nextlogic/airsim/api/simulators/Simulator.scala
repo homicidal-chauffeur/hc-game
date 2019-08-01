@@ -1,6 +1,8 @@
 package net.nextlogic.airsim.api.simulators
 
 import net.nextlogic.airsim.api.simulations.{AgileSimulation, HCMerzSimulation, HomicidalChauffeurSimulation}
+import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
+import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings.GameType
 import net.nextlogic.airsim.api.utils.Constants
 
 object Simulator extends App {
@@ -9,7 +11,7 @@ object Simulator extends App {
     System.exit(1)
   }
 
-  val gameType = args(0).toInt
+  val gameType = SimulatorSettings.gameTypeFromString(args(0))
   val gamma = args(1).toDouble
   val beta = args(2).toDouble
 
@@ -18,17 +20,15 @@ object Simulator extends App {
     gameType,
     gamma,
     beta,
-    gamma * Constants.pursuerVelocity,
-    Constants.pursuerVelocity,
-    beta * Constants.turningRadius
+    Constants.pursuerVelocity
   )
 
   println(s"Gamma: $gamma, Beta: $beta")
 
   val simulation = gameType match {
-    case 0 => AgileSimulation(settings)
-    case 1 => HomicidalChauffeurSimulation(settings)
-    case 6 => HCMerzSimulation(settings)
+    case SimulatorSettings.AgileSimulation => AgileSimulation(settings)
+    case SimulatorSettings.HomicidalChauffeurSimulation => HomicidalChauffeurSimulation(settings)
+    case SimulatorSettings.HCMerzSimulation => HCMerzSimulation(settings)
     case _ => throw new Exception("Wrong simulation code")
   }
 

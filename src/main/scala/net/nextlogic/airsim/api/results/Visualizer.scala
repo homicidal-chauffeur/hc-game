@@ -3,7 +3,9 @@ import java.awt.{BasicStroke, Color, Graphics, Graphics2D}
 import java.awt.geom.{AffineTransform, Path2D, Point2D}
 
 import javax.swing.{JFrame, JPanel}
-import net.nextlogic.airsim.api.simulators.actors.PilotActor.{Evade, PilotType, Pursue}
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
+
+import net.nextlogic.airsim.api.utils.Vector3r
 
 import scala.collection.mutable
 
@@ -31,7 +33,7 @@ class Visualizer(captureDistance: Double) extends JPanel {
     path
   }
 
-  def newPath(point: Point2D): Path2D = {
+  def newPath(point: Vector3r): Path2D = {
     val path = new Path2D.Double()
     val (x, y) = transformToBottomCenter(point)
     path.moveTo(x, y)
@@ -62,16 +64,15 @@ class Visualizer(captureDistance: Double) extends JPanel {
 
   def calculateScale(): (Double, Double) = {
     val lines = paths.values
-    val height = lines.map(l => l.getBounds2D.getHeight).max
-    val width = lines.map(l => l.getBounds2D.getWidth).max
+    val height = lines.map(l => l.getBounds2D.getMaxX).max
+    val width = lines.map(l => l.getBounds2D.getMaxY).max
 
     (width / getWidth.toDouble, height / getHeight.toDouble)
-
   }
 
-  def transformToBottomCenter(point: Point2D): (Double, Double) =
-    (getWidth / 2 - point.getX * 50, getHeight - point.getY * 50)
+  def transformToBottomCenter(point: Vector3r): (Double, Double) =
+    (getWidth / 2 - point.x * 50, getHeight - point.y * 50)
 
 }
 
-case class PathSegment(pilotType: PilotType, point: Point2D)
+case class PathSegment(pilotType: PilotType, point: Vector3r)
