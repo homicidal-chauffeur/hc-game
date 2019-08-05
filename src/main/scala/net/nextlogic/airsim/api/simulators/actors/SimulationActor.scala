@@ -1,0 +1,117 @@
+package net.nextlogic.airsim.api.simulators.actors
+
+import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import akka.event.Logging
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
+import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
+import net.nextlogic.airsim.api.gameplay.players.PlayerRouter
+import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.RelativePositionWithOpponent
+import net.nextlogic.airsim.api.gameplay.telemetry.{PositionTrackerActor, RelativePositionActor}
+import net.nextlogic.airsim.api.simulators.SimulationRunner.{createVehicles, system}
+import net.nextlogic.airsim.api.simulators.SimulationSetup
+import net.nextlogic.airsim.api.simulators.actors.PilotActor.CurrentTheta
+import net.nextlogic.airsim.api.simulators.actors.RefereeActor.GameSettings
+import net.nextlogic.airsim.api.simulators.actors.SimulationActor._
+import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
+import net.nextlogic.airsim.api.ui.visualizer.SimulationPanel
+import net.nextlogic.airsim.api.utils.VehicleSettings
+
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
+
+object SimulationActor {
+  def props(settings: SimulatorSettings, visualizer: Option[SimulationPanel]): Props
+    = Props(new SimulationActor(settings, visualizer))
+
+  case object StartSimulation
+  case object StopSimulation
+  case class GetTheta(vehicle: VehicleSettings)
+}
+
+class SimulationActor(settings: SimulatorSettings, visualizerPanel: Option[SimulationPanel]) extends Actor with ActorLogging {
+  val logger = Logging(context.system, this)
+  implicit val timeout: Timeout = 1.second
+  implicit val executionContext: ExecutionContext = context.dispatcher
+
+  override def receive: Receive = stoppedReceive
+
+  def stoppedReceive: Receive = {
+    case StartSimulation =>
+      val vehicles = createVehicles(settings)
+      // TODO refactor somewhere else
+      SimulationSetup.setup(vehicles, settings.captureDistance)
+
+      val relativePositionAct = context.actorOf(Props[RelativePositionActor], "relative-position")
+      val visualizer = context.actorOf(VisualizerActor.props(visualizerPanel, settings.captureDistance), "visualizer")
+      val resultsWriter = context.actorOf(Props[ResultsWriterActor], "results-writer")
+
+      initTrackers(vehicles, Seq(relativePositionAct, visualizer, resultsWriter), relativePositionAct)
+
+      val pilots = settings.pilotSettings.zip(vehicles)
+        .foldLeft(Map[VehicleSettings, ActorRef]())( (acc, settingsWithVehicle)  =>
+          acc.updated(
+            settingsWithVehicle._2.settings,
+            context.actorOf(
+              PilotActor.props(
+                PlayerRouter.Player(
+                  settingsWithVehicle._1.actionType,
+                  settingsWithVehicle._1.pilotStrategy,
+                  settingsWithVehicle._1.velocityType.fromPursuerVelocity(settings.maxVelocityPursuer, settings.gamma),
+                  settingsWithVehicle._1.turningRadius,
+                  settingsWithVehicle._2
+                ),
+                resultsWriter
+              ),
+              settingsWithVehicle._2.settings.name
+            )
+          )
+        )
+      logger.debug(s"Created ${pilots.size} pilots from ${settings.pilotSettings} settings")
+
+      val gameSettings = GameSettings(
+        pilots.values.toList,
+        relativePositionAct,
+        visualizer,
+        settings.captureDistance,
+        60.seconds
+      )
+
+      val referee = context.actorOf(RefereeActor.props(gameSettings))
+      referee ! RefereeActor.Start
+
+      context.become(staredReceive(pilots, relativePositionAct, visualizer), discardOld = true)
+
+  }
+
+  def staredReceive(pilots: Map[VehicleSettings, ActorRef], relativePositionActor: ActorRef, visualizer: ActorRef): Receive = {
+    case StopSimulation =>
+      logger.debug("Stopping simulation")
+      self ! PoisonPill
+
+    case GetTheta(vehicle: VehicleSettings) =>
+      val s = sender()
+      val player: ActorRef = pilots(vehicle)
+
+      val thetaFuture = for {
+        theta <- (player ? CurrentTheta).mapTo[Double]
+      } yield theta
+
+      thetaFuture.map(th => s ! Some(th))
+
+    case q: RelativePositionActor.ForVehicle =>
+      val s = sender()
+      ask(relativePositionActor, q).mapTo[Option[RelativePositionWithOpponent]].pipeTo(s)
+  }
+
+
+
+  private def initTrackers(vehicles: Seq[AirSimBaseClient], observers: Seq[ActorRef],
+                           relativePositionTracker: ActorRef): Seq[ActorRef] = {
+    val trackers = vehicles
+      .map(v => context.actorOf(PositionTrackerActor.props(settings.locationUpdateDelay, v, observers)))
+    relativePositionTracker ! RelativePositionActor.Start(trackers)
+
+    trackers
+  }
+}

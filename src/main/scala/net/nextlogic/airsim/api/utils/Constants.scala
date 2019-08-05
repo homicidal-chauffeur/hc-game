@@ -2,7 +2,7 @@ package net.nextlogic.airsim.api.utils
 
 object Constants {
 //  val IP = "10.10.0.82"
-  val IP = "35.244.98.76"
+  val IP = "35.189.49.107"
   val PORT = 41451
 
   val eVehicle = "Evader"
@@ -19,6 +19,7 @@ object Constants {
   val TIMEOUT = 60f
 
   val locationUpdateDelay = 100
+  val pilotDelay = 100
 
   val defaultGamma = 0.5
   val defaultBeta = 0.8

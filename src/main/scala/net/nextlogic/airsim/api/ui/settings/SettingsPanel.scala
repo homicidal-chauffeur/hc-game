@@ -1,25 +1,21 @@
 package net.nextlogic.airsim.api.ui.settings
 
 import javax.swing.BorderFactory
+import net.nextlogic.airsim.api.simulators.SimulationRunner
 import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
 import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings.{AgileSimulation, GameType, HCMerzSimulation, HomicidalChauffeurSimulation}
-import net.nextlogic.airsim.api.ui.SimulationSettings.visualizer
 import net.nextlogic.airsim.api.ui.common.UiUtils
-import net.nextlogic.airsim.api.ui.visualizer.TestVisualizer
-import net.nextlogic.airsim.api.utils.{Constants, VehicleSettings}
+import net.nextlogic.airsim.api.ui.visualizer.SimulationPanel
 
 import scala.collection.mutable
 import scala.swing.BorderPanel.Position.{Center, North, South}
 import scala.swing.event.ButtonClicked
 import scala.swing.{BorderPanel, Button, ComboBox, GridPanel, Label, ScrollPane, TextField}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
-
-class SettingsPanel(initialSettings: SimulatorSettings) extends BorderPanel {
+class SettingsPanel(initialSettings: SimulatorSettings, val visualizer: SimulationPanel) extends BorderPanel {
   val ipField: TextField = UiUtils.newField(initialSettings.ip)
-  val portField: TextField = UiUtils.newIntField(Constants.PORT.toString)
+  val portField: TextField = UiUtils.newIntField(initialSettings.port.toString)
 
   val gammaField: TextField = UiUtils.newNumberField(initialSettings.gamma.toString)
   val betaField: TextField = UiUtils.newNumberField(initialSettings.beta.toString)
@@ -71,8 +67,12 @@ class SettingsPanel(initialSettings: SimulatorSettings) extends BorderPanel {
       simSettings.contents.foreach(c => c.enabled = false)
       playersTable.enabled = false
       buttons.contents.filter(_ != pauseSim).foreach(c => c.enabled = false)
+
+      val currentSettings = settings
       visualizer.clear()
-      Future(TestVisualizer.simulate(visualizer))
+      visualizer.pilotSettings = currentSettings.pilotSettings
+
+      SimulationRunner.run(settings, Some(visualizer))
 
     case ButtonClicked(`pauseSim`) =>
       simSettings.contents.foreach(c => c.enabled = true)
@@ -88,6 +88,7 @@ class SettingsPanel(initialSettings: SimulatorSettings) extends BorderPanel {
 
     SimulatorSettings(
       ipField.text,
+      UiUtils.parseOptInt(portField.text).get,
       gameTypeField.selection.item,
       g.get, b.get,
 

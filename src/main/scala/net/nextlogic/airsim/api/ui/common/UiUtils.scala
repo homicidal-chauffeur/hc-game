@@ -44,8 +44,8 @@ object UiUtils {
   }
 
   lazy val defaultPlayers: mutable.Seq[PilotSettings] = mutable.Seq(
-    PilotSettings(Evade, Constants.eVehicle , Blue, EvaderVelocity ),
-    PilotSettings(Pursue, Constants.pVehicle, Red, PursuerVelocity )
+    PilotSettings(Evade, HCMerz, Constants.eVehicle , Blue, EvaderVelocity ),
+    PilotSettings(Pursue, HCMerz, Constants.pVehicle, Red, PursuerVelocity, Constants.turningRadius )
   )
 
   lazy val defaultSettings: SimulatorSettings = SimulatorSettings(

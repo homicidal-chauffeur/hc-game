@@ -3,30 +3,30 @@ package net.nextlogic.airsim.api.ui.visualizer
 import java.awt.geom.{AffineTransform, Path2D}
 import java.awt.{BasicStroke, Color, Dimension, Graphics2D}
 
-import net.nextlogic.airsim.api.results.PathSegment
-import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
-import net.nextlogic.airsim.api.utils.Vector3r
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings
+import net.nextlogic.airsim.api.ui.common.UiUtils
+import net.nextlogic.airsim.api.utils.{Vector3r, VehicleSettings}
 
 import scala.collection.mutable
 import scala.swing.Panel
 
-class SimulationPanel extends Panel {
-//  override lazy val peer = new SimulationJPanel()
+class SimulationPanel() extends Panel {
+  var pilotSettings: Seq[PilotSettings] = UiUtils.defaultPlayers
 
-  val colors: Map[PilotType, Color] = Map(
-    Evade -> new Color(0, 0, 1, 0.2f),
-    Pursue -> new Color(1, 0, 0, 0.2f)
-  )
-  var paths: mutable.Map[PilotType, Path2D] = mutable.Map[PilotType, Path2D]()
+  val colors: Map[String, Color] = pilotSettings
+    .foldLeft(Map[String, Color]())( (acc, settings) => acc.updated(settings.name, settings.color.color))
+
+  var paths: mutable.Map[VehicleSettings, Path2D] = mutable.Map[VehicleSettings, Path2D]()
   val initialScale = 50.0
   val offset = 10
 
   preferredSize = new Dimension(1200, 800)
 
   def addSegment(segment: PathSegment): Path2D = {
-    val path = paths.getOrElse(segment.pilotType, newPath(segment.point))
+    // println(s"${segment.vehicleSettings.name}: Adding segment to ${segment.point} ")
+    val path = paths.getOrElse(segment.vehicleSettings, newPath(segment.point))
     path.lineTo(segment.point.x * initialScale, segment.point.y * initialScale)
-    paths.update(segment.pilotType, path)
+    paths.update(segment.vehicleSettings, path)
     repaint()
     path
   }
@@ -40,6 +40,7 @@ class SimulationPanel extends Panel {
 
   def clear(): Unit = {
     paths.clear()
+    repaint()
   }
 
   def calculateTransformation(): AffineTransform = {
@@ -49,7 +50,7 @@ class SimulationPanel extends Panel {
     val minX = lines.map(l => l.getBounds2D.getMinX).min
     val minY = lines.map(l => l.getBounds2D.getMinY).min
 
-    println(s"Min: $minX x $minY, Max: $maxX, $maxY")
+    // println(s"Min: $minX x $minY, Max: $maxX, $maxY")
 
     val width = maxX - minX
     val height = maxY - minY
@@ -90,13 +91,15 @@ class SimulationPanel extends Panel {
     val transformation = calculateTransformation()
 
     paths.foreach{ typeWithPath =>
-      g2.setPaint(colors.getOrElse(typeWithPath._1, Color.ORANGE))
+      g2.setPaint(colors.getOrElse(typeWithPath._1.name, Color.ORANGE))
       val scaled = typeWithPath._2.createTransformedShape(transformation)
       val bounds = scaled.getBounds2D
-      println(s"Drawing path at ${bounds.getMinX}x${bounds.getMinY} to ${bounds.getMaxX}x${bounds.getMaxY}")
+      // println(s"Drawing path at ${bounds.getMinX}x${bounds.getMinY} to ${bounds.getMaxX}x${bounds.getMaxY}")
       g2.draw(scaled)
     }
 
   }
 
 }
+
+case class PathSegment(vehicleSettings: VehicleSettings, point: Vector3r)

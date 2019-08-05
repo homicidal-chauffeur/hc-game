@@ -5,8 +5,6 @@ import net.nextlogic.airsim.api.utils.Constants
 
 
 object SimulatorSettings {
-  // TODO replace this by including Pilot sub-types like HcmEvader, HcmPursuer, AgaileEvader, etc. in PilotType
-  // user will then select the pilot type instead of the game type
   trait GameType
   case object AgileSimulation extends GameType
   case object HCMerzSimulation extends GameType
@@ -22,6 +20,7 @@ object SimulatorSettings {
 }
 
 case class SimulatorSettings(ip: String = Constants.IP,
+                             port: Int = Constants.PORT,
                              gameType: GameType = SimulatorSettings.HCMerzSimulation,
                              gamma: Double = Constants.defaultGamma,
                              beta: Double = Constants.defaultBeta,

@@ -1,15 +1,14 @@
 package net.nextlogic.airsim.api.gameplay
 
-import net.nextlogic.airsim.api.utils.Constants.{IP, PORT}
-import net.nextlogic.airsim.api.utils.{Constants, DriveTrainType, GeoPoint, MultirotorState, MultirotorStateUtils, Quaternionr, Vector3r, VehicleSettings, YawMode}
+import net.nextlogic.airsim.api.utils.{Constants, DriveTrainType, GeoPoint, MultirotorStateUtils, Quaternionr, Vector3r, VehicleSettings, YawMode}
 import org.msgpack.MessagePack
 import org.msgpack.`type`.Value
 import org.msgpack.rpc.{Client, Future}
 import org.msgpack.rpc.loop.EventLoop
 import play.api.libs.json.Json
 
-case class AirSimBaseClient(ip: String, settings: VehicleSettings) {
-  val client = new Client(ip, PORT, EventLoop.start(new MessagePack))
+case class AirSimBaseClient(ip: String, port: Int, settings: VehicleSettings) {
+  val client = new Client(ip, port, EventLoop.start(new MessagePack))
 
   def ping: Boolean = {
     val response = this.client.callApply("ping", Array())
@@ -42,6 +41,10 @@ case class AirSimBaseClient(ip: String, settings: VehicleSettings) {
   def isApiControlEnabled: Boolean = {
     val response = this.client.callApply("isApiControlEnabled", Array(settings.name))
     response.asBooleanValue.getBoolean
+  }
+
+  def disconnect(): Unit = {
+    this.client.close()
   }
 
   def booleanCommand(command: String): Boolean = {

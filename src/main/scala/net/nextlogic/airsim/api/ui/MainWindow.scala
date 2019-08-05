@@ -8,13 +8,13 @@ import net.nextlogic.airsim.api.ui.visualizer.SimulationPanel
 import scala.swing.BorderPanel.Position.{Center, North, South}
 import swing._
 
-object SimulationSettings  extends SimpleSwingApplication {
-  val visualizer = new SimulationPanel
+object MainWindow  extends SimpleSwingApplication {
+  val visualizer = new SimulationPanel()
 
   override def top: Frame = new MainFrame {
     title = "Simulator & Game Settings"
 
-    val settings = new SettingsPanel(SimulatorSettings(pilotSettings = UiUtils.defaultPlayers))
+    val settings = new SettingsPanel(SimulatorSettings(pilotSettings = UiUtils.defaultPlayers), visualizer)
 
     val panel = new BorderPanel {
       layout(settings) = North

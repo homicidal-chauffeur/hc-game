@@ -11,7 +11,7 @@ object MultirotorStateUtils {
 
   def isLanded(stateJson: String): Boolean = parseState(stateJson).landedState == 0
 
-  def getPosition(stateJson: String): Vector3r = Timer.time(parseState(stateJson).kinematicsEstimated.position)
+  def getPosition(stateJson: String): Vector3r = parseState(stateJson).kinematicsEstimated.position // Timer.time()
 
   def getMultirotorState(stateJson: String): MultirotorState = parseState(stateJson)
 

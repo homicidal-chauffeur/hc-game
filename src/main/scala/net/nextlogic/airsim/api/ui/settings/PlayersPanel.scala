@@ -11,6 +11,7 @@ class PlayersPanel(var players: mutable.Seq[PilotSettings]) extends BoxPanel(Ori
   val header: GridPanel = new GridPanel(1, 5) {
     contents ++= Seq(
       new Label("Player Type"),
+      new Label("Strategy"),
       new Label("AirSim Name"),
       new Label("Color"),
       new Label("Top Velocity"),

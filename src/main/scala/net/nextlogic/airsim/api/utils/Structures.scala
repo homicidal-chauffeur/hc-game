@@ -9,7 +9,7 @@ import play.api.libs.functional.syntax._
 
 import scala.collection.JavaConverters._
 
-case class VehicleSettings(name: String, vehicleType: PilotType, maxVelocity: Double, turningRadius: Double = 0)
+case class VehicleSettings(name: String, actionType: ActionType)
 
 case class YawMode(isRate: Boolean = true, yawOrRate: Float = 0f) {
 
