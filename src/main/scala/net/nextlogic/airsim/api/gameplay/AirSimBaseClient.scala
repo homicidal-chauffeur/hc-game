@@ -1,6 +1,6 @@
 package net.nextlogic.airsim.api.gameplay
 
-import net.nextlogic.airsim.api.utils.{Constants, DriveTrainType, GeoPoint, MultirotorStateUtils, Quaternionr, Vector3r, VehicleSettings, YawMode}
+import net.nextlogic.airsim.api.utils.{Constants, DriveTrainType, GeoPoint, MultirotorStateUtils, Quaternionr, Timer, Vector3r, VehicleSettings, YawMode}
 import org.msgpack.MessagePack
 import org.msgpack.`type`.Value
 import org.msgpack.rpc.{Client, Future}
@@ -83,6 +83,7 @@ case class AirSimBaseClient(ip: String, port: Int, settings: VehicleSettings) {
   }
   // -----------------------------------  Query Methods ---------------------------------------------
 
+  def getMultirotorStateTimed: String = Timer.time{ this.client.callApply("getMultirotorState", Array(settings.name)).toString }
   def getMultirotorState: String = this.client.callApply("getMultirotorState", Array(settings.name)).toString
 
   def getPosition: Vector3r = MultirotorStateUtils.getPosition(getMultirotorState)
