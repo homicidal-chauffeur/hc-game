@@ -25,7 +25,7 @@ object Constants {
   val defaultBeta = 0.8
 
 
-  val pursuerVelocity = 3 // velocity of pursuer, m/s
+  val pursuerVelocity = 10 // velocity of pursuer, m/s
 
   val turningRadius = 8 // turning radius of pursuer, m
   val timeStepForAngleChange = 0.1 //deltaT
