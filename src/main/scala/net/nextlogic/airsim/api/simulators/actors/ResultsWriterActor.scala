@@ -53,7 +53,7 @@ class ResultsWriterActor extends Actor with ActorLogging {
 //        writer.writeAll(lines)
 //      }
 
-      val startMillis = moves.head._1
+      val startMillis = moves.headOption.map(md => md._1).getOrElse(System.currentTimeMillis)
       moves.foreach{ playerWithMove =>
         val millis = playerWithMove._1
         val md = playerWithMove._3
