@@ -28,7 +28,7 @@ public class ChauffeurDronePlayer extends DronePlayer {
 
     public void move() {
         Vector3r vel = new Vector3r((float) (maxV*Math.cos(theta)), (float) (maxV*Math.sin(theta)), 0f);
-        moveByVelocityZ(vel, new Vector3r(0, 0, Simulator.planeHeight), dt, DrivetrainType.MaxDegreeOfFreedom,
+        moveByVelocityZ(vel, new Vector3r(0, 0, Simulator.altitude), dt, DrivetrainType.MaxDegreeOfFreedom,
                 new YawMode());
 
 //		moveByAngle(-0.1f, 0f, -5f, (float) theta, dt);
