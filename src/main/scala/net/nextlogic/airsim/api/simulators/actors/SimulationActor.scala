@@ -6,7 +6,8 @@ import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter
-import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.RelativePositionWithOpponent
+import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.NewPosition
+import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.{NewTheta, RelativePositionWithThetas}
 import net.nextlogic.airsim.api.gameplay.telemetry.{PositionTrackerActor, RelativePositionActor}
 import net.nextlogic.airsim.api.simulators.SimulationRunner.{createVehicles, system}
 import net.nextlogic.airsim.api.simulators.SimulationSetup
@@ -26,7 +27,6 @@ object SimulationActor {
 
   case object StartSimulation
   case object StopSimulation
-  case class GetTheta(vehicle: VehicleSettings)
 }
 
 class SimulationActor(settings: SimulatorSettings, visualizerPanel: Option[SimulationPanel]) extends Actor with ActorLogging {
@@ -89,19 +89,12 @@ class SimulationActor(settings: SimulatorSettings, visualizerPanel: Option[Simul
       logger.debug("Stopping simulation")
       self ! PoisonPill
 
-    case GetTheta(vehicle: VehicleSettings) =>
-      val s = sender()
-      val player: ActorRef = pilots(vehicle)
-
-      val thetaFuture = for {
-        theta <- (player ? CurrentTheta).mapTo[Double]
-      } yield theta
-
-      thetaFuture.map(th => s ! Some(th))
-
     case q: RelativePositionActor.ForVehicle =>
       val s = sender()
-      ask(relativePositionActor, q).mapTo[Option[RelativePositionWithOpponent]].pipeTo(s)
+      ask(relativePositionActor, q).mapTo[Option[RelativePositionWithThetas]].pipeTo(s)
+
+    case newTheta: NewTheta =>
+      relativePositionActor ! newTheta
   }
 
 

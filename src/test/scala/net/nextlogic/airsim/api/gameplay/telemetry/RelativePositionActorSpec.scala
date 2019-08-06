@@ -3,7 +3,7 @@ package net.nextlogic.airsim.api.gameplay.telemetry
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.NewPosition
-import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.{ForVehicle, RelativePositionWithOpponent, Start}
+import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.{ForVehicle, NewTheta, RelativePositionWithThetas, Start}
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings
 import net.nextlogic.airsim.api.utils.{Vector3r, VehicleSettings}
 import org.junit.runner.RunWith
@@ -28,8 +28,8 @@ class RelativePositionActorSpec extends TestKit(ActorSystem("BasicSpec"))
         relPos ! Start(Seq())
         val v1 = VehicleSettings("Testy", PilotSettings.Pursue)
 
-        relPos ! ForVehicle(v1, 0)
-        val reply = expectMsgType[Option[RelativePositionWithOpponent]]
+        relPos ! ForVehicle(v1)
+        val reply = expectMsgType[Option[RelativePositionWithThetas]]
         assert(reply.isEmpty)
       }
     }
@@ -50,18 +50,20 @@ class RelativePositionActorSpec extends TestKit(ActorSystem("BasicSpec"))
           val theta2 = r.nextDouble
           relPos ! NewPosition(p1, v1)
           relPos ! NewPosition(p2, v2)
+          relPos ! NewTheta(theta, v1)
+          relPos ! NewTheta(theta2, v2)
 
-          relPos ! ForVehicle(v1, theta)
-          val reply = expectMsgType[Option[RelativePositionWithOpponent]]
+          relPos ! ForVehicle(v1)
+          val reply = expectMsgType[Option[RelativePositionWithThetas]]
           assert(reply.isDefined)
-          reply.get.opponent shouldBe v2
+          reply.get.opponentsTheta shouldBe theta2
           reply.get.relativePosition shouldBe RelativePosition.relativePosTo2D(p1, p2, theta)
 
-          relPos ! ForVehicle(v2, theta2)
-          val reply2 = expectMsgType[Option[RelativePositionWithOpponent]]
+          relPos ! ForVehicle(v2)
+          val reply2 = expectMsgType[Option[RelativePositionWithThetas]]
           println(reply2)
           assert(reply2.isDefined)
-          reply2.get.opponent shouldBe v1
+          reply2.get.opponentsTheta shouldBe theta
           reply2.get.relativePosition shouldBe RelativePosition.relativePosTo2D(p2, p1, theta2)
         }
 

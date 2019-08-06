@@ -11,36 +11,39 @@ import scala.collection.mutable
 
 
 object RelativePositionActor {
-  case class ForEvader(theta: Double)
-  case class ForPursuer(theta: Double)
-  case class ForVehicle(vehicleSettings: VehicleSettings, theta: Double)
-  case object CheckEvaderPosition
-  case object CheckPursuerPosition
+  case class ForVehicle(vehicleSettings: VehicleSettings)
   case object Distance
   case object Stop
   case class Start(trackers: Seq[ActorRef])
-  case class RelativePositionWithOpponent(relativePosition: Vector3r, opponent: VehicleSettings,
-                                          myPosition: Vector3r, oppPosition: Vector3r)
+  case class NewTheta(theta: Double, vehicleSettings: VehicleSettings)
+  case class RelativePositionWithThetas(relativePosition: Vector3r,
+                                        myTheta: Double,
+                                        opponentsTheta: Double,
+                                        myPosition: Vector3r, oppPosition: Vector3r)
 }
 
 class RelativePositionActor() extends Actor with ActorLogging with Timers {
   val logger = Logging(context.system, this)
 
   var positions: mutable.Map[VehicleSettings, Vector3r] = mutable.Map[VehicleSettings, Vector3r]()
+  var thetas: mutable.Map[VehicleSettings, Double] = mutable.Map[VehicleSettings, Double]()
 
   override def receive: Receive = stoppedReceive
 
   def startedReceive: Receive = {
-    case ForVehicle(myVehicleSettings, theta) =>
+    case ForVehicle(myVehicleSettings) =>
       val myPosition = positions.get(myVehicleSettings)
+      val myTheta = thetas.getOrElse(myVehicleSettings, 0.0d)
+
       val opponents = positions.keys.filter(vs => vs.actionType != myVehicleSettings.actionType)
       logger.debug(s"Getting relative position for $myVehicleSettings - opponents: ${opponents}")
 
       val relPosition = if (myPosition.isDefined && opponents.nonEmpty) {
         val relPositions = opponents.map(opponent =>
-          RelativePositionWithOpponent(
-            calculateRelPosition(myPosition.get, theta, positions(opponent)),
-            opponent,
+          RelativePositionWithThetas(
+            calculateRelPosition(myPosition.get, myTheta, positions(opponent)),
+            myTheta,
+            thetas.getOrElse(opponent, 0.0d),
             myPosition.get, positions(opponent)
           )
         )
@@ -71,6 +74,9 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
     case NewPosition(position, vehicleSettings) =>
       positions.update(vehicleSettings, position)
 
+    case NewTheta(theta, vehicleSettings) =>
+      thetas.update(vehicleSettings, theta)
+
     case Stop =>
       logger.debug("Stopping relative position...")
       context.unbecome()
@@ -80,9 +86,8 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
   def stoppedReceive: Receive = {
     case NewPosition(_, _) => sender() ! PositionTrackerActor.Stop
 
+    case ForVehicle(_) => None
     case Distance => None
-    case ForEvader => None
-    case ForPursuer => None
     case Start(trackers) =>
       context.become(startedReceive)
       trackers.foreach(t => t ! PositionTrackerActor.Start)

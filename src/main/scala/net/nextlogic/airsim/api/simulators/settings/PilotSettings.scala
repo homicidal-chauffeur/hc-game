@@ -3,6 +3,7 @@ package net.nextlogic.airsim.api.simulators.settings
 import java.awt.Color
 
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
+import net.nextlogic.airsim.api.utils.Constants
 
 object PilotSettings {
   trait VelocityType {
@@ -44,4 +45,4 @@ case class PilotSettings(actionType: ActionType,
                          name: String,
                          color: PilotColor,
                          velocityType: VelocityType,
-                         turningRadius: Double = 0)
+                         turningRadius: Double = Constants.turningRadius)

@@ -7,11 +7,10 @@ import akka.util.Timeout
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.MoveInfo
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor
-import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.RelativePositionWithOpponent
+import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.{NewTheta, RelativePositionWithThetas}
 import net.nextlogic.airsim.api.simulators.actors.PilotActor._
 import net.nextlogic.airsim.api.simulators.actors.ResultsWriterActor.MoveDetails
-import net.nextlogic.airsim.api.simulators.actors.SimulationActor.GetTheta
-import net.nextlogic.airsim.api.simulators.settings.PilotSettings
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings.Evade
 import net.nextlogic.airsim.api.utils.{Constants, Vector3r, VehicleSettings}
 
 import scala.concurrent.duration._
@@ -29,7 +28,7 @@ object PilotActor {
   case class PilotTimerKey(vehicle: VehicleSettings)
   case object CurrentTheta
 
-  case class RelativePositionWithThetaFuture(relPos: Option[RelativePositionWithOpponent], opponentsTheta: Option[Double])
+  case class RelativePositionWithThetaFuture(relPos: Option[RelativePositionWithThetas], opponentsTheta: Option[Double])
 
 }
 
@@ -39,7 +38,7 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
   implicit val timeout: Timeout = 1.second
   implicit val executionContext: ExecutionContext = context.dispatcher
 
-  var theta: Double = 0
+  if (player.actionType == Evade) context.parent ! NewTheta(Math.acos(0.5), player.vehicle.settings)
 
   override def receive: Receive = stoppedReceive
 
@@ -48,7 +47,8 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
       logger.debug(s"${player.vehicle.settings.name}: Starting the game...")
       context.become(startedReceive, discardOld = true)
       timers.startSingleTimer(
-        PilotTimerKey(player.vehicle.settings), Play(player.vehicle.settings), Constants.pilotDelay.millis
+        PilotTimerKey(player.vehicle.settings), Play(player.vehicle.settings),
+        scala.util.Random.nextInt(Constants.pilotDelay).millis // this is to make them start at slightly different time
       )
 
     case Reset =>
@@ -59,25 +59,15 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
     case Stop =>
       logger.debug(s"${player.vehicle.settings.name}: Stopping the game...")
       context.unbecome()
-    case CurrentTheta => sender() ! theta
     case Play(vehicleSettings) =>
-      val request = RelativePositionActor.ForVehicle(vehicleSettings, theta)
+      val request = RelativePositionActor.ForVehicle(vehicleSettings)
 
-      val relOptionWithOppThetaFuture = for {
-        relPositionOption <- (context.parent ? request).mapTo[Option[RelativePositionWithOpponent]]
-        opponentsTheta <- relPositionOption match {
-          case Some(relPosition) => (context.parent ? GetTheta(relPosition.opponent) ).mapTo[Some[Double]]
-          case None => Future(None)
-        }
-      } yield RelativePositionWithThetaFuture(relPositionOption, opponentsTheta)
-
-      relOptionWithOppThetaFuture.map{ relOptionWithOppTheta =>
-        if (relOptionWithOppTheta.relPos.isDefined && relOptionWithOppTheta.opponentsTheta.isDefined) {
-          val relativePosition = relOptionWithOppTheta.relPos.get
-
+      val relPositionFuture = (context.parent ? request).mapTo[Option[RelativePositionWithThetas]]
+      relPositionFuture.map {
+        case Some(relPosition) =>
           val moveInfo = MoveInfo(
-            theta, relativePosition.relativePosition, relOptionWithOppTheta.opponentsTheta.get,
-            relativePosition.myPosition, relativePosition.oppPosition,
+            relPosition.myTheta, relPosition.relativePosition, relPosition.opponentsTheta,
+            relPosition.myPosition, relPosition.oppPosition,
             player.maxVelocity,
             player.turningRadius
           )
@@ -85,18 +75,17 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
             player,
             moveInfo
           )
-          logger.debug(s"${player.vehicle.settings.name}: ${player.actionType} with theta ${newTheta} and relative position ${relOptionWithOppTheta.relPos.get.relativePosition}...")
+          logger.debug(s"${player.vehicle.settings.name}: ${player.actionType} with theta ${newTheta} and relative position ${relPosition.relativePosition}...")
           resultsWriter ! MoveDetails(
-            player, moveInfo
+            player, moveInfo.copy(myTheta = newTheta)
           )
-          theta = newTheta
+          context.parent ! NewTheta(newTheta, player.vehicle.settings)
           timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), Constants.pilotDelay.millis)
-        } else {
-          logger.debug(s"${player.vehicle.settings.name}: not moving because don't have relative position (or opponent's theta?)")
-          timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), Constants.pilotDelay.millis)
-        }
-      }
 
+        case None =>
+          logger.debug(s"${player.vehicle.settings.name}: not moving because don't have relative position ")
+          timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), Constants.pilotDelay.millis)
+      }
   }
 
   override def postStop(): Unit = {
