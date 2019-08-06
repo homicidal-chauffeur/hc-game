@@ -19,18 +19,19 @@ object HCMerzPlayer extends BasePlayer {
     val x = moveInfo.relPosition.x
     val y = moveInfo.relPosition.y
 
-    var phi = 0.0
-    if ((x * x + (y - minR) * (y - minR)) < minR * minR) {
-      phi = moveInfo.opponentsTheta + Math.atan2(y + minR, x)
-      System.out.println("In left turning circle")
-    }
-    else if ((x * x + (y + minR) * (y + minR)) < minR * minR) {
-      phi = moveInfo.opponentsTheta + Math.atan2(y - minR, x)
-
-      System.out.println("In right turning circle")
-    }
-    else if (Math.hypot(x, y) < minR) phi = moveInfo.opponentsTheta + Math.atan2(y, x) + Math.PI / 2
-    else phi = moveInfo.opponentsTheta + Math.atan2(y, x)
+    val phi =
+      if ((x * x + (y - minR) * (y - minR)) < minR * minR) {
+        System.out.println("In left turning circle")
+        moveInfo.opponentsTheta + Math.atan2(y + minR, x)
+      }
+      else if ((x * x + (y + minR) * (y + minR)) < minR * minR) {
+        System.out.println("In right turning circle")
+        moveInfo.opponentsTheta + Math.atan2(y - minR, x)
+      }
+      else if (Math.hypot(x, y) < minR) {
+        moveInfo.opponentsTheta + Math.atan2(y, x) + Math.PI / 2
+      }
+      else moveInfo.opponentsTheta + Math.atan2(y, x)
 
     steerEvade(phi)
   }
