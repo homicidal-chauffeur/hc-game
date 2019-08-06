@@ -29,7 +29,7 @@ trait BasePlayer {
       DriveTrainType.maxDegreesOfFreedom, YawMode()
     )
     //		moveByAngle(-0.1f, 0f, -5f, (float) theta, dt);
-    println(s"${player.vehicle.settings.name}: Moving by velocity $velocity and theta $theta")
+    // println(s"${player.vehicle.settings.name}: Moving by velocity $velocity and theta $theta")
 
   }
 }

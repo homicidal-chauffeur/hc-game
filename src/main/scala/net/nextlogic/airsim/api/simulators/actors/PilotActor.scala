@@ -75,7 +75,7 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
             player,
             moveInfo
           )
-          logger.debug(s"${player.vehicle.settings.name}: ${player.actionType} with theta ${newTheta} and relative position ${relPosition.relativePosition}...")
+          // logger.debug(s"${player.vehicle.settings.name}: ${player.actionType} with theta ${newTheta} and relative position ${relPosition.relativePosition}...")
           resultsWriter ! MoveDetails(
             player, moveInfo.copy(myTheta = newTheta)
           )
