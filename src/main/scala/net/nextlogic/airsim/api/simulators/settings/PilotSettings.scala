@@ -45,4 +45,6 @@ case class PilotSettings(actionType: ActionType,
                          name: String,
                          color: PilotColor,
                          velocityType: VelocityType,
-                         turningRadius: Double = Constants.turningRadius)
+                         turningRadius: Double = Constants.turningRadius,
+                         pilotDelay: Int = Constants.pilotDelay
+                        )

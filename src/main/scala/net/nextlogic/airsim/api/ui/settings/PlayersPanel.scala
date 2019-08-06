@@ -15,7 +15,8 @@ class PlayersPanel(var players: mutable.Seq[PilotSettings]) extends BoxPanel(Ori
       new Label("AirSim Name"),
       new Label("Color"),
       new Label("Top Velocity"),
-      new Label("Turning Radius")
+      new Label("Turning Radius"),
+      new Label("Pilot Delay (ms)")
     )
   }
 

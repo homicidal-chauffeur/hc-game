@@ -80,11 +80,11 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
             player, moveInfo.copy(myTheta = newTheta)
           )
           context.parent ! NewTheta(newTheta, player.vehicle.settings)
-          timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), Constants.pilotDelay.millis)
+          timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), player.pilotDelay.millis)
 
         case None =>
           logger.debug(s"${player.vehicle.settings.name}: not moving because don't have relative position ")
-          timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), Constants.pilotDelay.millis)
+          timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), player.pilotDelay.millis)
       }
   }
 

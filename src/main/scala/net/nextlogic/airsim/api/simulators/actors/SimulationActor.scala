@@ -59,6 +59,7 @@ class SimulationActor(settings: SimulatorSettings, visualizerPanel: Option[Simul
                   settingsWithVehicle._1.pilotStrategy,
                   settingsWithVehicle._1.velocityType.fromPursuerVelocity(settings.maxVelocityPursuer, settings.gamma),
                   settingsWithVehicle._1.turningRadius,
+                  settingsWithVehicle._1.pilotDelay,
                   settingsWithVehicle._2
                 ),
                 resultsWriter

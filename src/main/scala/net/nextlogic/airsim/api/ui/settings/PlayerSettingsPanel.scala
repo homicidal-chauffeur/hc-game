@@ -22,10 +22,11 @@ class PlayerSettingsPanel(val initialSettings: PilotSettings) extends GridPanel(
     selection.item = initialSettings.velocityType
   }
   val turningRadiusField: TextField = newNumberField(initialSettings.turningRadius.toString)
+  val pilotDelayField: TextField = newNumberField(initialSettings.pilotDelay.toString)
 
   contents ++= Seq(
     actionTypeField, strategyField, playerNameField, colorField, topVelocityField,
-    turningRadiusField
+    turningRadiusField, pilotDelayField
   )
 
   def settings: PilotSettings = PilotSettings(
@@ -34,6 +35,7 @@ class PlayerSettingsPanel(val initialSettings: PilotSettings) extends GridPanel(
     playerNameField.text,
     colorField.selection.item,
     topVelocityField.selection.item,
-    UiUtils.parseOptDouble(turningRadiusField.text).get
+    UiUtils.parseOptDouble(turningRadiusField.text).getOrElse(initialSettings.turningRadius),
+    UiUtils.parseOptInt(pilotDelayField.text).getOrElse(initialSettings.pilotDelay)
   )
 }
