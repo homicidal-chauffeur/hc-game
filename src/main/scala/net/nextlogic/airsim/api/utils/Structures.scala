@@ -63,6 +63,28 @@ object Vector3r {
 
 case class Quaternionr(x: Double = 0f, y: Double = 0f, z: Double = 0f, w: Double = 1f) {
   override def toString: String = s"[x, y, z, w] = [$x, $y, $z, $w]"
+
+  def distance2D(other: Quaternionr): Double = {
+    val xDiff = other.x - this.x
+    val yDiff = other.y - this.y
+
+    Math.sqrt(xDiff * xDiff + yDiff * yDiff)
+  }
+
+  // http://www.chrobotics.com/library/understanding-quaternions
+  def roll: Double = Math.atan(
+    2 * ( x * y + z * w) / (x * x - y * y - z * z + w * w)
+  )
+
+  def pitch: Double = -Math.asin(
+    2 * (y * w - x * z)
+  )
+
+  def yaw: Double = Math.atan(
+    2 * ( x * w + y * z) / (x * x + y * y - z * z - w * w)
+  )
+
+
 }
 
 object Quaternionr {
