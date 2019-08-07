@@ -5,7 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.NewPosition
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.{ForVehicle, NewTheta, RelativePositionWithThetas, Start}
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings
-import net.nextlogic.airsim.api.utils.{Vector3r, VehicleSettings}
+import net.nextlogic.airsim.api.utils.{Quaternionr, Vector3r, VehicleSettings}
 import org.junit.runner.RunWith
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import org.scalatestplus.junit.JUnitRunner
@@ -46,10 +46,12 @@ class RelativePositionActorSpec extends TestKit(ActorSystem("BasicSpec"))
         (1 to 5).foreach {_ =>
           val p1 = Vector3r(r.nextInt(100), r.nextInt(100))
           val p2 = Vector3r(r.nextInt(200), r.nextInt(200))
+          val o1 = Quaternionr(r.nextInt(100), r.nextInt(100), r.nextInt(100), r.nextInt(100))
+          val o2 = Quaternionr(r.nextInt(100), r.nextInt(100), r.nextInt(100), r.nextInt(100))
           val theta = r.nextDouble
           val theta2 = r.nextDouble
-          relPos ! NewPosition(p1, v1)
-          relPos ! NewPosition(p2, v2)
+          relPos ! NewPosition(p1, o1, v1)
+          relPos ! NewPosition(p2, o2, v2)
           relPos ! NewTheta(theta, v1)
           relPos ! NewTheta(theta2, v2)
 

@@ -29,8 +29,9 @@ class VisualizerActor(val visualizer: Option[SimulationPanel], val captureDistan
   }
 
   def startedReceive(): Receive = {
-    case NewPosition(position, vehicleSettings) =>
+    case NewPosition(position, orientation, vehicleSettings) =>
       positions.put(vehicleSettings, position)
+      // TODO somehow use the orientation to show the vehicle's orientation
       visualizer.foreach( _.addSegment(PathSegment(vehicleSettings, position)) )
 
     case Path(path, vehicleSettings) =>

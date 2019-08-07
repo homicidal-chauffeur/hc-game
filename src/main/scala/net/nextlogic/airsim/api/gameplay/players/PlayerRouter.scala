@@ -17,6 +17,7 @@ object PlayerRouter {
   case class MoveInfo(player: Player,
                       myTheta: Double, relPosition: Vector3r, opponentsTheta: Double,
                       myPosition: Vector3r, opponentsPosition: Vector3r,
+                      myThetaFromOrientation: Double, oppThetaFromOrientation: Double,
                       time: Long = System.currentTimeMillis())
 
   object MoveInfo {

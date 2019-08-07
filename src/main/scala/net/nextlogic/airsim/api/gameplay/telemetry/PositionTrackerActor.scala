@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor._
-import net.nextlogic.airsim.api.utils.{MultirotorState, MultirotorStateUtils, Vector3r, VehicleSettings}
+import net.nextlogic.airsim.api.utils.{MultirotorState, MultirotorStateUtils, Quaternionr, Vector3r, VehicleSettings}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -17,7 +17,7 @@ object PositionTrackerActor {
   case object Stop
   case object UpdatePosition
 
-  case class NewPosition(position: Vector3r, vehicleSettings: VehicleSettings)
+  case class NewPosition(position: Vector3r, orientation: Quaternionr, vehicleSettings: VehicleSettings)
   case class NewMultiRotorState(state: MultirotorState, vehicleSettings: VehicleSettings)
 
   case class Path(path: Seq[MultirotorState], vehicleSettings: VehicleSettings)
@@ -43,7 +43,10 @@ class PositionTrackerActor(locationUpdateDelay: Int, vehicle: AirSimBaseClient, 
       timers.startSingleTimer(PositionTrackerTimerKey(vehicle.settings), UpdatePosition, locationUpdateDelay.millis)
 
       observers.foreach { o =>
-        o ! NewPosition(vehicleState.kinematicsEstimated.position, vehicle.settings)
+        o ! NewPosition(
+          vehicleState.kinematicsEstimated.position, vehicleState.kinematicsEstimated.orientation,
+          vehicle.settings
+        )
         // maybe not necessary
         // o ! NewMultiRotorState(vehicleState, vehicle.settings)
       }

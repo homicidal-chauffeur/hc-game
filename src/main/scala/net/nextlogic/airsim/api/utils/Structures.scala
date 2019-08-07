@@ -71,17 +71,15 @@ case class Quaternionr(x: Double = 0f, y: Double = 0f, z: Double = 0f, w: Double
     Math.sqrt(xDiff * xDiff + yDiff * yDiff)
   }
 
-  // http://www.chrobotics.com/library/understanding-quaternions
-  def roll: Double = Math.atan(
-    2 * ( x * y + z * w) / (x * x - y * y - z * z + w * w)
+  // https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/indexLocal.htm
+  def roll: Double = Math.atan2(
+    2.0 * (y * z + x * w),(-x * x - y * y + z * z + w * w)
   )
 
-  def pitch: Double = -Math.asin(
-    2 * (y * w - x * z)
-  )
+  def pitch: Double = Math.asin(-2.0 * (x * z - y * w))
 
-  def yaw: Double = Math.atan(
-    2 * ( x * w + y * z) / (x * x + y * y - z * z - w * w)
+  def yaw: Double = Math.atan2(
+    2.0 * (x * y + z * w), x * x - y * y - z * z + w * w
   )
 
 

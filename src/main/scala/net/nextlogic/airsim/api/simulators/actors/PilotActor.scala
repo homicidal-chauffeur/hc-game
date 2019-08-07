@@ -67,11 +67,12 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
           val moveInfo = MoveInfo(
             player,
             relPosition.myTheta, relPosition.relativePosition, relPosition.opponentsTheta,
-            relPosition.myPosition, relPosition.oppPosition
+            relPosition.myPosition, relPosition.oppPosition,
+            relPosition.myThetaFromOrientation, relPosition.oppThetaFromOrientation
           )
           val newTheta = PlayerRouter.moveWithTheta(moveInfo)
           // logger.debug(s"${player.vehicle.settings.name}: ${player.actionType} with theta ${newTheta} and relative position ${relPosition.relativePosition}...")
-          resultsWriter ! moveInfo.copy(myTheta = newTheta, time = System.nanoTime())
+          resultsWriter ! moveInfo.copy(myTheta = newTheta)
 
           context.parent ! NewTheta(newTheta, player.vehicle.settings)
           timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), player.pilotDelay.millis)

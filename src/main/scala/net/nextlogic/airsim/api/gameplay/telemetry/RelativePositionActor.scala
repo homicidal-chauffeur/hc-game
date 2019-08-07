@@ -5,7 +5,7 @@ import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.NewPosition
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor._
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
-import net.nextlogic.airsim.api.utils.{Vector3r, VehicleSettings}
+import net.nextlogic.airsim.api.utils.{Quaternionr, Vector3r, VehicleSettings}
 
 import scala.collection.mutable
 
@@ -19,13 +19,15 @@ object RelativePositionActor {
   case class RelativePositionWithThetas(relativePosition: Vector3r,
                                         myTheta: Double,
                                         opponentsTheta: Double,
-                                        myPosition: Vector3r, oppPosition: Vector3r)
+                                        myPosition: Vector3r, oppPosition: Vector3r,
+                                        myThetaFromOrientation: Double, oppThetaFromOrientation: Double)
 }
 
 class RelativePositionActor() extends Actor with ActorLogging with Timers {
   val logger = Logging(context.system, this)
 
   var positions: mutable.Map[VehicleSettings, Vector3r] = mutable.Map[VehicleSettings, Vector3r]()
+  var orientations: mutable.Map[VehicleSettings, Quaternionr] = mutable.Map[VehicleSettings, Quaternionr]()
   var thetas: mutable.Map[VehicleSettings, Double] = mutable.Map[VehicleSettings, Double]()
 
   override def receive: Receive = stoppedReceive
@@ -33,20 +35,23 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
   def startedReceive: Receive = {
     case ForVehicle(myVehicleSettings) =>
       val myPosition = positions.get(myVehicleSettings)
+      val myThetaFromOrientation = orientations.get(myVehicleSettings).map(_.yaw).getOrElse(0.0d)
       val myTheta = thetas.getOrElse(myVehicleSettings, 0.0d)
 
       val opponents = positions.keys.filter(vs => vs.actionType != myVehicleSettings.actionType)
       logger.debug(s"Getting relative position for $myVehicleSettings - opponents: ${opponents}")
 
       val relPosition = if (myPosition.isDefined && opponents.nonEmpty) {
-        val relPositions = opponents.map(opponent =>
+        val relPositions = opponents.map { opponent =>
+          val oppThetaFromOrientation = orientations.get(opponent).map(_.yaw).getOrElse(0.0d)
           RelativePositionWithThetas(
             calculateRelPosition(myPosition.get, myTheta, positions(opponent)),
             myTheta,
             thetas.getOrElse(opponent, 0.0d),
-            myPosition.get, positions(opponent)
+            myPosition.get, positions(opponent),
+            myThetaFromOrientation, oppThetaFromOrientation
           )
-        )
+        }
         // TODO how to determine the shortest relative position???
         relPositions.headOption
       } else None
@@ -71,8 +76,9 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
       sender() ! distances.headOption
 
 
-    case NewPosition(position, vehicleSettings) =>
+    case NewPosition(position, orientation, vehicleSettings) =>
       positions.update(vehicleSettings, position)
+      orientations.update(vehicleSettings, orientation)
 
     case NewTheta(theta, vehicleSettings) =>
       thetas.update(vehicleSettings, theta)
@@ -84,7 +90,7 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
   }
 
   def stoppedReceive: Receive = {
-    case NewPosition(_, _) => sender() ! PositionTrackerActor.Stop
+    case _: NewPosition => sender() ! PositionTrackerActor.Stop
 
     case ForVehicle(_) => None
     case Distance => None
