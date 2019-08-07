@@ -17,11 +17,13 @@ object RefereeActor {
 
   case class GameSettings(pilots: Seq[ActorRef], relativePosition: ActorRef,
                           visualizer: ActorRef,
+                          resultsWriter: ActorRef,
                           captureDistance: Double, playTime: FiniteDuration)
   case class Start(startTime: Long = System.currentTimeMillis())
   case object Stop
   case object PlayTimeReached
   case object CheckIfGameOver
+  case class Capture(distance: Double, time: Long = System.currentTimeMillis())
 }
 
 class RefereeActor(settings: GameSettings) extends Actor with ActorLogging with Timers {
@@ -59,6 +61,7 @@ class RefereeActor(settings: GameSettings) extends Actor with ActorLogging with 
                |Captured at distance $distance (required: ${settings.captureDistance})
                |****************************************************************""".stripMargin)
           // self ! Stop
+          settings.resultsWriter ! Capture(distance)
         }
       })
   }

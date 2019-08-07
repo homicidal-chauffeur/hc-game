@@ -60,6 +60,7 @@ class SimulationActor(settings: SimulatorSettings, visualizerPanel: Option[Simul
         pilots.values.toList,
         relativePositionAct,
         visualizer,
+        resultsWriter,
         settings.captureDistance,
         settings.gameTime.seconds
       )

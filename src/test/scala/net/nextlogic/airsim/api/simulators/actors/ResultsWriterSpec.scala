@@ -5,7 +5,7 @@ import akka.testkit.{EventFilter, ImplicitSender, TestKit}
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.{MoveInfo, Player}
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.Path
-import net.nextlogic.airsim.api.simulators.actors.RefereeActor.Start
+import net.nextlogic.airsim.api.simulators.actors.RefereeActor.{Capture, Start}
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings.{Evade, HCMerz}
 import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
 import net.nextlogic.airsim.api.utils.{MultirotorStateUtils, Vector3r, VehicleSettings}
@@ -33,6 +33,8 @@ class ResultsWriterSpec extends TestKit(ActorSystem("BasicSpec"))
 
       writer ! move
       writer ! move
+
+      writer ! Capture(5)
 
       val state = MultirotorStateUtils.getMultirotorState(stateJson)
       //EventFilter.debug(pattern = s"Received path from ${player.vehicle.settings.name}", occurrences = 1) intercept {

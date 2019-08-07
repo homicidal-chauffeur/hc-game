@@ -8,12 +8,12 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.MoveInfo
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.Path
-import net.nextlogic.airsim.api.simulators.actors.RefereeActor.Start
+import net.nextlogic.airsim.api.simulators.actors.RefereeActor.{Capture, Start}
 import net.nextlogic.airsim.api.simulators.actors.ResultsWriterActor.{ResultsFile, WriteFile}
 import net.nextlogic.airsim.api.simulators.actors.SimulationActor.StopSimulation
 import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
 import net.nextlogic.airsim.api.utils.MultirotorState
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.{Format, Json, Writes}
 
 import scala.collection.mutable
 
@@ -28,17 +28,21 @@ object ResultsWriterActor {
   case class ResultsFile(startDate: LocalDateTime,
                          startMillis: Long,
                          settings: SimulatorSettings,
+                         captures: Seq[Capture],
                          moves: Seq[MoveInfo],
                          telemetry: mutable.Map[String, Seq[MultirotorState]])
   object ResultsFile {
+    implicit val captureFormats: Format[Capture] = Json.format[Capture]
+
     implicit val formats: Writes[ResultsFile] = Json.writes[ResultsFile]
   }
 }
 
 class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLogging {
   val logger = Logging(context.system, this)
-  var telemetry: mutable.Map[String, Seq[MultirotorState]] = mutable.Map[String, Seq[MultirotorState]]()
-  var moves: mutable.Queue[MoveInfo] = mutable.Queue[MoveInfo]()
+  val telemetry: mutable.Map[String, Seq[MultirotorState]] = mutable.Map[String, Seq[MultirotorState]]()
+  val moves: mutable.Queue[MoveInfo] = mutable.Queue[MoveInfo]()
+  val captures: mutable.Queue[Capture] = mutable.Queue[Capture]()
 
   override def receive: Receive = stoppedReceive
 
@@ -53,7 +57,7 @@ class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLo
   def startedReceive(startTime: Long): Receive = {
     case Path(path, vehicleSettings) =>
       logger.debug(s"Received path from ${vehicleSettings.name}")
-      telemetry.update(vehicleSettings.name, path)
+      telemetry.update(vehicleSettings.name, path.map(state => state.copy(timestamp = state.timestamp - startTime)))
 
       if (receivedAllPaths) self ! WriteFile
 
@@ -63,6 +67,7 @@ class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLo
         Instant.ofEpochMilli(startTime).atZone(ZoneId.systemDefault()).toLocalDateTime,
         startTime,
         settings,
+        captures,
         moves,
         telemetry
       )
@@ -83,7 +88,11 @@ class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLo
 
 
     case moveInfo: MoveInfo =>
-      moves.enqueue(moveInfo.copy(time = startTime - moveInfo.time))
+      moves.enqueue(moveInfo.copy(time = moveInfo.time - startTime))
+
+    case capture: Capture =>
+      captures.enqueue(capture.copy(time = capture.time - startTime))
+
   }
 
   def receivedAllPaths: Boolean = telemetry.keySet.size == moves.map(_.player).distinct.size
