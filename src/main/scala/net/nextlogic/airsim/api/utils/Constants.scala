@@ -24,6 +24,7 @@ object Constants {
   val defaultGamma = 0.5
   val defaultBeta = 0.8
 
+  val gameTime = 60
 
   val pursuerVelocity = 10 // velocity of pursuer, m/s
 

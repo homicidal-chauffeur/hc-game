@@ -8,4 +8,5 @@ object RelativePosition {
     val y = -(otherPos.x - myPosition.x) * Math.sin(theta) + (otherPos.y - myPosition.y) * Math.cos(theta)
     Vector3r(x, y)
   }
+
 }

@@ -19,7 +19,6 @@ object MultirotorStateUtils {
 }
 
 object KinematicsEstimated {
-
   implicit val reads: Reads[KinematicsEstimated] = (
     (__ \ "position").read[Vector3r] and
       (__ \ "orientation").read[Quaternionr] and
@@ -28,14 +27,15 @@ object KinematicsEstimated {
       (__ \ "linear_acceleration").read[Vector3r] and
       (__ \ "angular_acceleration").read[Vector3r]
   )(KinematicsEstimated.apply _)
-}
 
-object KinematicsEstimatedShort {
-
-  implicit val reads: Reads[KinematicsEstimatedShort] = (
-    (__ \ "position").read[Vector3r] and
-      (__ \ "orientation").read[Quaternionr]
-  )(KinematicsEstimatedShort.apply _)
+  implicit val writes: Writes[KinematicsEstimated] = (
+    (__ \ "position").write[Vector3r] and
+    (__ \ "orientation").write[Quaternionr] and
+    (__ \ "linear_velocity").write[Vector3r] and
+    (__ \ "angular_velocity").write[Vector3r] and
+    (__ \ "linear_acceleration").write[Vector3r] and
+    (__ \ "angular_acceleration").write[Vector3r]
+  )(unlift(KinematicsEstimated.unapply))
 }
 
 object MultirotorState {
@@ -44,11 +44,15 @@ object MultirotorState {
       (__ \ "landed_state").read[Int] and
       (__ \ "kinematics_estimated").read[KinematicsEstimated]
   )(MultirotorState.apply _)
+  implicit val writes: Writes[MultirotorState] = (
+    (__ \ "timestamp").write[Long] and
+      (__ \ "landed_state").write[Int] and
+      (__ \ "kinematics_estimated").write[KinematicsEstimated]
+  )(unlift(MultirotorState.unapply))
 }
 
 case class KinematicsEstimated(position: Vector3r, orientation: Quaternionr,
                                linearVelocity: Vector3r, angularVelocity: Vector3r,
                                linearAcceleration: Vector3r, angularAcceleration: Vector3r)
-case class KinematicsEstimatedShort(position: Vector3r, orientation: Quaternionr)
 case class MultirotorState(timestamp: Long, landedState: Int, kinematicsEstimated: KinematicsEstimated)
 

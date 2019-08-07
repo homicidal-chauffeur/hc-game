@@ -2,6 +2,7 @@ package net.nextlogic.airsim.api.simulators.settings
 
 import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings.GameType
 import net.nextlogic.airsim.api.utils.Constants
+import play.api.libs.json.{Format, JsValue, Json, Writes}
 
 
 object SimulatorSettings {
@@ -10,12 +11,18 @@ object SimulatorSettings {
   case object HCMerzSimulation extends GameType
   case object HomicidalChauffeurSimulation extends GameType
 
+  implicit object GameTypeWrites extends Writes[GameType] {
+    def writes(vt: GameType): JsValue = Json.toJson(vt.toString)
+  }
+
   def gameTypeFromString(gt: String): GameType = gt match {
     case "0" => AgileSimulation
     case "1" => HomicidalChauffeurSimulation
     case "6" => HCMerzSimulation
     case other => throw new NoSuchElementException(s"No simulation for code $other")
   }
+
+  implicit val formats: Writes[SimulatorSettings] = Json.writes[SimulatorSettings]
 
 }
 
@@ -26,8 +33,9 @@ case class SimulatorSettings(ip: String = Constants.IP,
                              beta: Double = Constants.defaultBeta,
                              maxVelocityPursuer: Double = Constants.pursuerVelocity,
                              locationUpdateDelay: Int = Constants.locationUpdateDelay,
+                             gameTime: Int = Constants.gameTime,
                              pilotSettings: Seq[PilotSettings] = Seq()) {
- def captureDistance: Double = beta * Constants.turningRadius
+  def captureDistance: Double = beta * Constants.turningRadius
 
   def maxVelocityEvader: Double = gamma * maxVelocityPursuer
 }

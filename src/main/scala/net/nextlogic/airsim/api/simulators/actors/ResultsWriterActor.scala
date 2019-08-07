@@ -1,84 +1,90 @@
 package net.nextlogic.airsim.api.simulators.actors
 
-import akka.actor.{Actor, ActorLogging}
-import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.{MoveInfo, Player}
+import java.io._
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, LocalDateTime, ZoneId}
+
+import akka.actor.{Actor, ActorLogging, Props}
+import akka.event.Logging
+import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.MoveInfo
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.Path
-import net.nextlogic.airsim.api.simulators.actors.ResultsWriterActor.MoveDetails
+import net.nextlogic.airsim.api.simulators.actors.RefereeActor.Start
+import net.nextlogic.airsim.api.simulators.actors.ResultsWriterActor.{ResultsFile, WriteFile}
 import net.nextlogic.airsim.api.simulators.actors.SimulationActor.StopSimulation
+import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
+import net.nextlogic.airsim.api.utils.MultirotorState
+import play.api.libs.json.{Json, Writes}
 
 import scala.collection.mutable
-import java.io.{File, FileWriter}
-import java.time.{LocalDateTime, LocalTime}
-import java.time.format.DateTimeFormatter
-
-import akka.event.Logging
-
-import com.opencsv.CSVWriter
 
 
 
 object ResultsWriterActor {
-  case class MoveDetails(player: Player, moveInfo: MoveInfo)
+  def props(settings: SimulatorSettings): Props =
+    Props(new ResultsWriterActor(settings))
+
+  case object WriteFile
+
+  case class ResultsFile(startDate: LocalDateTime,
+                         startMillis: Long,
+                         settings: SimulatorSettings,
+                         moves: Seq[MoveInfo],
+                         telemetry: mutable.Map[String, Seq[MultirotorState]])
+  object ResultsFile {
+    implicit val formats: Writes[ResultsFile] = Json.writes[ResultsFile]
+  }
 }
 
-class ResultsWriterActor extends Actor with ActorLogging {
+class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLogging {
   val logger = Logging(context.system, this)
-//  var moveDetails: mutable.Map[Player, mutable.Queue[MoveInfo]] =
-//    mutable.Map[Player, mutable.Queue[MoveInfo]]()
-  var moves = mutable.Queue[(Long, Player, MoveInfo)]()
+  var telemetry: mutable.Map[String, Seq[MultirotorState]] = mutable.Map[String, Seq[MultirotorState]]()
+  var moves: mutable.Queue[MoveInfo] = mutable.Queue[MoveInfo]()
 
-  override def receive: Receive = {
+  override def receive: Receive = stoppedReceive
+
+  def stoppedReceive: Receive = {
+    case Start(startTime) =>
+      logger.info("Starting results writer...")
+      context.become(startedReceive(startTime), discardOld = true)
+
+    case e => logger.debug(s"Received unexpected $e in stopped state")
+  }
+
+  def startedReceive(startTime: Long): Receive = {
     case Path(path, vehicleSettings) =>
       logger.debug(s"Received path from ${vehicleSettings.name}")
+      telemetry.update(vehicleSettings.name, path)
+
+      if (receivedAllPaths) self ! WriteFile
+
+
+    case WriteFile =>
+      val results = ResultsFile(
+        Instant.ofEpochMilli(startTime).atZone(ZoneId.systemDefault()).toLocalDateTime,
+        startTime,
+        settings,
+        moves,
+        telemetry
+      )
+
       val t = LocalDateTime.now()
-      val st = t.format(DateTimeFormatter.ISO_DATE_TIME)
-      val writer = new CSVWriter(
-        new FileWriter(s"results/csv/$st.csv")
-      )
-      writer.writeNext(
-        Array("Time", "Type", "Theta", "Opponents Theta", "Rel X", "Rel Y", "My X", "My Y", "Opp X", "Opp Y",
-          "Max Velocity", "Turning Radius")
-      )
-//      moveDetails.keys.foreach { player =>
-//        val queue = moveDetails(player)
-//        logger.debug(s"${player.vehicle.settings.name}: ${queue.size} log entries found")
-//        val lines: java.util.List[Array[String]] = queue.map(md => Array(
-//          player.vehicle.settings.name, md.myTheta, md.opponentsTheta,
-//          md.relPosition.x, md.relPosition.y,
-//          md.myPosition.x, md.myPosition.y,
-//          md.opponentsPosition.x, md.opponentsPosition.y,
-//          md.maxVelocity, md.turningRadius
-//        ).map(_.toString)
-//        ).asJava
-//        writer.writeAll(lines)
-//      }
-
-      val startMillis = moves.headOption.map(md => md._1).getOrElse(System.currentTimeMillis)
-      moves.foreach{ playerWithMove =>
-        val millis = playerWithMove._1
-        val md = playerWithMove._3
-        val player = playerWithMove._2
-
-        val line = Array(
-          millis - startMillis,
-          player.vehicle.settings.name, md.myTheta, md.opponentsTheta,
-          md.relPosition.x, md.relPosition.y,
-          md.myPosition.x, md.myPosition.y,
-          md.opponentsPosition.x, md.opponentsPosition.y,
-          md.maxVelocity, md.turningRadius
-        ).map(_.toString)
-
-        writer.writeNext(line)
+      val st = t.format(DateTimeFormatter.ISO_DATE_TIME).replace(":", "-")
+      val pw = new PrintWriter(new File(s"results/json/$st.json" ))
+      try {
+        pw.write(Json.toJson(results).toString())
+        pw.close()
+      } catch {
+        case e: Exception => logger.error(s"Couldn't save the results with error ${e.getMessage}")
+      } finally {
+        context.parent ! StopSimulation
       }
 
-      writer.close()
-      logger.debug(s"Written path from ${vehicleSettings.name}")
-      context.parent ! StopSimulation
+      logger.debug("Written results and stopping the simulation...")
 
-    case MoveDetails(player, moveInfo) =>
-//      val moves = moveDetails.getOrElse(player, mutable.Queue[MoveInfo]())
-//      moves.enqueue(moveInfo)
-//      moveDetails.update(player, moves)
-      moves.enqueue((System.currentTimeMillis(), player, moveInfo))
+
+    case moveInfo: MoveInfo =>
+      moves.enqueue(moveInfo.copy(time = startTime - moveInfo.time))
   }
+
+  def receivedAllPaths: Boolean = telemetry.keySet.size == moves.map(_.player).distinct.size
 }

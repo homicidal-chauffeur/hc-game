@@ -4,7 +4,7 @@ import java.util
 
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
 import org.msgpack.`type`.MapValue
-import play.api.libs.json.{Reads, __}
+import play.api.libs.json.{Json, OWrites, Reads, Writes, __}
 import play.api.libs.functional.syntax._
 
 import scala.collection.JavaConverters._
@@ -52,6 +52,13 @@ object Vector3r {
       (__ \ "y_val").read[Double] and
       (__ \ "z_val").read[Double]
     )(Vector3r.apply _)
+
+  implicit val writes: Writes[Vector3r] = (
+    (__ \ "x_val").write[Double] and
+      (__ \ "y_val").write[Double] and
+      (__ \ "z_val").write[Double]
+    )(unlift(Vector3r.unapply))
+
 }
 
 case class Quaternionr(x: Double = 0f, y: Double = 0f, z: Double = 0f, w: Double = 1f) {
@@ -65,6 +72,13 @@ object Quaternionr {
       (__ \ "z_val").read[Double] and
       (__ \ "w_val").read[Double]
     )(Quaternionr.apply _)
+
+  implicit val writes: Writes[Quaternionr] = (
+    (__ \ "x_val").write[Double] and
+      (__ \ "y_val").write[Double] and
+      (__ \ "z_val").write[Double] and
+      (__ \ "w_val").write[Double]
+    )(unlift(Quaternionr.unapply))
 
 }
 
@@ -86,5 +100,9 @@ object GeoPoint {
       (__ \ "longitude").read[Double] and
       (__ \ "altitude").read[Double]
     )(GeoPoint.apply _)
-
+  implicit val writes: Writes[GeoPoint] = (
+    (__ \ "latitude").write[Double] and
+      (__ \ "longitude").write[Double] and
+      (__ \ "altitude").write[Double]
+    )(unlift(GeoPoint.unapply))
 }

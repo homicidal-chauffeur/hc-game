@@ -18,7 +18,7 @@ object RefereeActor {
   case class GameSettings(pilots: Seq[ActorRef], relativePosition: ActorRef,
                           visualizer: ActorRef,
                           captureDistance: Double, playTime: FiniteDuration)
-  case object Start
+  case class Start(startTime: Long = System.currentTimeMillis())
   case object Stop
   case object PlayTimeReached
   case object CheckIfGameOver
@@ -31,7 +31,7 @@ class RefereeActor(settings: GameSettings) extends Actor with ActorLogging with 
   implicit val executionContext: ExecutionContext = context.dispatcher
 
   override def receive: Receive = {
-    case Start =>
+    case Start(_) =>
       settings.visualizer ! VisualizerActor.Start
       settings.pilots.foreach(p => p ! PilotActor.Start)
       timers.startSingleTimer(PlayTimeReached, PlayTimeReached, settings.playTime)

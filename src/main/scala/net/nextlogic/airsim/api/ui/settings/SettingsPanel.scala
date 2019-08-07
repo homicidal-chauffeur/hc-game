@@ -24,6 +24,7 @@ class SettingsPanel(initialSettings: SimulatorSettings, val visualizer: Simulati
       selection.item = initialSettings.gameType
     }
 
+  val gameTimeField: TextField = UiUtils.newIntField(initialSettings.gameTime.toString)
   val locationUpdateDelayField: TextField = UiUtils.newIntField(initialSettings.locationUpdateDelay.toString)
   val pursuerVelocityField: TextField = UiUtils.newNumberField(initialSettings.maxVelocityPursuer.toString)
 
@@ -41,6 +42,7 @@ class SettingsPanel(initialSettings: SimulatorSettings, val visualizer: Simulati
       new Label("Beta: "), betaField,
 
 
+      new Label("Game Time (s): "), gameTimeField,
       new Label("Location Update Delay (ms): "), locationUpdateDelayField,
       new Label("Pursuer Velocity: "), pursuerVelocityField,
     )
@@ -94,6 +96,8 @@ class SettingsPanel(initialSettings: SimulatorSettings, val visualizer: Simulati
 
       UiUtils.parseOptDouble(pursuerVelocityField.text).get,
       UiUtils.parseOptInt(locationUpdateDelayField.text).get,
+
+      UiUtils.parseOptInt(gameTimeField.text).get,
 
       playersTable.settings
     )

@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor._
-import net.nextlogic.airsim.api.utils.{Vector3r, VehicleSettings}
+import net.nextlogic.airsim.api.utils.{MultirotorState, MultirotorStateUtils, Vector3r, VehicleSettings}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -16,20 +16,18 @@ object PositionTrackerActor {
   case object Start
   case object Stop
   case object UpdatePosition
-  case object GetPosition
 
   case class NewPosition(position: Vector3r, vehicleSettings: VehicleSettings)
+  case class NewMultiRotorState(state: MultirotorState, vehicleSettings: VehicleSettings)
 
-  case class Path(path: mutable.Queue[Vector3r], vehicleSettings: VehicleSettings)
+  case class Path(path: Seq[MultirotorState], vehicleSettings: VehicleSettings)
 
   case class PositionTrackerTimerKey(vehicle: VehicleSettings)
 }
 
 class PositionTrackerActor(locationUpdateDelay: Int, vehicle: AirSimBaseClient, observers: Seq[ActorRef]) extends Actor with Timers with ActorLogging {
   val logger = Logging(context.system, this)
-
-  val path: mutable.Queue[Vector3r] = mutable.Queue[Vector3r]()
-  var positionVector = Vector3r()
+  val path: mutable.Queue[MultirotorState] = mutable.Queue[MultirotorState]()
 
   override def receive: Receive = stoppedReceive
 
@@ -40,15 +38,15 @@ class PositionTrackerActor(locationUpdateDelay: Int, vehicle: AirSimBaseClient, 
       logger.debug(s"${vehicle.settings.name}: Stopping position tracker...")
 
     case UpdatePosition =>
-      positionVector = vehicle.getPosition
-      this.path.enqueue(positionVector)
+      val vehicleState = MultirotorStateUtils.getMultirotorState(vehicle.getMultirotorState)
+      this.path.enqueue(vehicleState.copy(timestamp = System.currentTimeMillis()))
       timers.startSingleTimer(PositionTrackerTimerKey(vehicle.settings), UpdatePosition, locationUpdateDelay.millis)
 
-      observers.foreach(o =>
-          o ! NewPosition(positionVector, vehicle.settings)
-      )
-
-    case GetPosition => sender() ! positionVector
+      observers.foreach { o =>
+        o ! NewPosition(vehicleState.kinematicsEstimated.position, vehicle.settings)
+        // maybe not necessary
+        // o ! NewMultiRotorState(vehicleState, vehicle.settings)
+      }
   }
 
   def stoppedReceive: Receive = {
@@ -56,6 +54,5 @@ class PositionTrackerActor(locationUpdateDelay: Int, vehicle: AirSimBaseClient, 
       context.become(startedReceive, discardOld = true)
       timers.startSingleTimer(PositionTrackerTimerKey(vehicle.settings), UpdatePosition, locationUpdateDelay.millis)
       logger.debug(s"${vehicle.settings.name}: Starting position tracker...")
-    case GetPosition => sender() ! positionVector
   }
 }

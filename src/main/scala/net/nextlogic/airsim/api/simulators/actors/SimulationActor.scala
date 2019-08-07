@@ -21,9 +21,10 @@ import net.nextlogic.airsim.api.utils.VehicleSettings
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
+
 object SimulationActor {
   def props(settings: SimulatorSettings, visualizer: Option[SimulationPanel]): Props
-    = Props(new SimulationActor(settings, visualizer))
+  = Props(new SimulationActor(settings, visualizer))
 
   case object StartSimulation
   case object StopSimulation
@@ -44,42 +45,32 @@ class SimulationActor(settings: SimulatorSettings, visualizerPanel: Option[Simul
 
       val relativePositionAct = context.actorOf(Props[RelativePositionActor], "relative-position")
       val visualizer = context.actorOf(VisualizerActor.props(visualizerPanel, settings.captureDistance), "visualizer")
-      val resultsWriter = context.actorOf(Props[ResultsWriterActor], "results-writer")
+      val resultsWriter = context.actorOf(ResultsWriterActor.props(settings), "results-writer")
 
-      initTrackers(vehicles, Seq(relativePositionAct, visualizer, resultsWriter), relativePositionAct)
-
-      val pilots = settings.pilotSettings.zip(vehicles)
-        .foldLeft(Map[VehicleSettings, ActorRef]())( (acc, settingsWithVehicle)  =>
-          acc.updated(
-            settingsWithVehicle._2.settings,
-            context.actorOf(
-              PilotActor.props(
-                PlayerRouter.Player(
-                  settingsWithVehicle._1.actionType,
-                  settingsWithVehicle._1.pilotStrategy,
-                  settingsWithVehicle._1.velocityType.fromPursuerVelocity(settings.maxVelocityPursuer, settings.gamma),
-                  settingsWithVehicle._1.turningRadius,
-                  settingsWithVehicle._1.pilotDelay,
-                  settingsWithVehicle._2
-                ),
-                resultsWriter
-              ),
-              settingsWithVehicle._2.settings.name
-            )
-          )
+      val trackers = vehicles
+        .map(v => context.actorOf(
+          PositionTrackerActor.props(settings.locationUpdateDelay, v,
+            Seq(relativePositionAct, visualizer, resultsWriter))
         )
-      logger.debug(s"Created ${pilots.size} pilots from ${settings.pilotSettings} settings")
+        )
+
+      val pilots = generatePilots(vehicles, resultsWriter)
 
       val gameSettings = GameSettings(
         pilots.values.toList,
         relativePositionAct,
         visualizer,
         settings.captureDistance,
-        60.seconds
+        settings.gameTime.seconds
       )
 
       val referee = context.actorOf(RefereeActor.props(gameSettings))
-      referee ! RefereeActor.Start
+      val startWithTime = RefereeActor.Start()
+
+      relativePositionAct ! RelativePositionActor.Start(trackers)
+      resultsWriter ! startWithTime
+
+      referee ! startWithTime
 
       context.become(staredReceive(pilots, relativePositionAct, visualizer), discardOld = true)
 
@@ -98,14 +89,31 @@ class SimulationActor(settings: SimulatorSettings, visualizerPanel: Option[Simul
       relativePositionActor ! newTheta
   }
 
-
-
-  private def initTrackers(vehicles: Seq[AirSimBaseClient], observers: Seq[ActorRef],
-                           relativePositionTracker: ActorRef): Seq[ActorRef] = {
-    val trackers = vehicles
-      .map(v => context.actorOf(PositionTrackerActor.props(settings.locationUpdateDelay, v, observers)))
-    relativePositionTracker ! RelativePositionActor.Start(trackers)
-
-    trackers
+  private def generatePilots(vehicles: Seq[AirSimBaseClient], resultsWriter: ActorRef) = {
+    val pilots = settings.pilotSettings.zip(vehicles)
+      .foldLeft(Map[VehicleSettings, ActorRef]())((acc, settingsWithVehicle) =>
+        acc.updated(
+          settingsWithVehicle._2.settings,
+          context.actorOf(
+            PilotActor.props(
+              PlayerRouter.Player(
+                settingsWithVehicle._1.actionType,
+                settingsWithVehicle._1.pilotStrategy,
+                settingsWithVehicle._1.velocityType.fromPursuerVelocity(settings.maxVelocityPursuer, settings.gamma),
+                settingsWithVehicle._1.turningRadius,
+                settingsWithVehicle._1.pilotDelay,
+                settingsWithVehicle._2
+              ),
+              resultsWriter
+            ),
+            settingsWithVehicle._2.settings.name
+          )
+        )
+      )
+    logger.debug(s"Created ${pilots.size} pilots from ${settings.pilotSettings} settings")
+    pilots
   }
+
+
+
 }

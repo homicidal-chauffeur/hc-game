@@ -5,7 +5,7 @@ import net.nextlogic.airsim.api.utils.Constants
 
 object ChauffeurPlayer extends BasePlayer {
   def steer(phi: Double, moveInfo: MoveInfo): Double = {
-    val dtheta = phi * (moveInfo.maxVelocity / moveInfo.turningRadius)
+    val dtheta = phi * (moveInfo.player.maxVelocity / moveInfo.player.turningRadius)
     moveInfo.myTheta + dtheta * Constants.timeStepForAngleChange
   }
 

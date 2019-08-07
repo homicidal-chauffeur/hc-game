@@ -9,13 +9,13 @@ object HCMerzPlayer extends BasePlayer {
     theta
 
   def steerPursue(phi: Double, moveInfo: MoveInfo): Double = {
-    val dtheta = phi * (moveInfo.maxVelocity / moveInfo.turningRadius)
+    val dtheta = phi * (moveInfo.player.maxVelocity / moveInfo.player.turningRadius)
     moveInfo.myTheta + dtheta * Constants.timeStepForAngleChange
   }
 
 
   def evade(moveInfo: MoveInfo): Double = {
-    val minR = moveInfo.turningRadius
+    val minR = moveInfo.player.turningRadius
     val x = moveInfo.relPosition.x
     val y = moveInfo.relPosition.y
 

@@ -8,12 +8,12 @@ trait BasePlayer {
   def evade(moveInfo: MoveInfo): Double
   def pursue(moveInfo: MoveInfo): Double
 
-  def evadeOrPursue(player: PlayerRouter.Player, moveInfo: MoveInfo): Double = {
-    val newTheta = player.actionType match  {
+  def evadeOrPursue(moveInfo: MoveInfo): Double = {
+    val newTheta = moveInfo.player.actionType match  {
       case Evade => evade(moveInfo)
       case _ => pursue(moveInfo)
     }
-    move(player, newTheta)
+    move(moveInfo.player, newTheta)
 
     newTheta
   }

@@ -9,12 +9,11 @@ import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.MoveInfo
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor.{NewTheta, RelativePositionWithThetas}
 import net.nextlogic.airsim.api.simulators.actors.PilotActor._
-import net.nextlogic.airsim.api.simulators.actors.ResultsWriterActor.MoveDetails
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings.Evade
-import net.nextlogic.airsim.api.utils.{Constants, Vector3r, VehicleSettings}
+import net.nextlogic.airsim.api.utils.{Constants, VehicleSettings}
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
 
 
 object PilotActor {
@@ -66,19 +65,14 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
       relPositionFuture.map {
         case Some(relPosition) =>
           val moveInfo = MoveInfo(
-            relPosition.myTheta, relPosition.relativePosition, relPosition.opponentsTheta,
-            relPosition.myPosition, relPosition.oppPosition,
-            player.maxVelocity,
-            player.turningRadius
-          )
-          val newTheta = PlayerRouter.moveWithTheta(
             player,
-            moveInfo
+            relPosition.myTheta, relPosition.relativePosition, relPosition.opponentsTheta,
+            relPosition.myPosition, relPosition.oppPosition
           )
+          val newTheta = PlayerRouter.moveWithTheta(moveInfo)
           // logger.debug(s"${player.vehicle.settings.name}: ${player.actionType} with theta ${newTheta} and relative position ${relPosition.relativePosition}...")
-          resultsWriter ! MoveDetails(
-            player, moveInfo.copy(myTheta = newTheta)
-          )
+          resultsWriter ! moveInfo.copy(myTheta = newTheta, time = System.nanoTime())
+
           context.parent ! NewTheta(newTheta, player.vehicle.settings)
           timers.startSingleTimer(PilotTimerKey(player.vehicle.settings), Play(vehicleSettings), player.pilotDelay.millis)
 

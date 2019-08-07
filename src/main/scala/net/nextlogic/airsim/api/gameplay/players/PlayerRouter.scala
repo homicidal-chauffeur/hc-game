@@ -3,21 +3,31 @@ package net.nextlogic.airsim.api.gameplay.players
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
 import net.nextlogic.airsim.api.utils.Vector3r
+import play.api.libs.json.{JsValue, Json, Writes}
 
 
 object PlayerRouter {
   case class Player(actionType: ActionType, pilotStrategy: PilotStrategy,
                     maxVelocity: Double, turningRadius: Double, pilotDelay: Int,
                     vehicle: AirSimBaseClient)
-  case class MoveInfo(myTheta: Double, relPosition: Vector3r, opponentsTheta: Double,
-                      myPosition: Vector3r, opponentsPosition: Vector3r,
-                      maxVelocity: Double, turningRadius: Double = 0)
+  implicit object PlayerWrites extends Writes[Player] {
+    def writes(p: Player): JsValue = Json.toJson(p.vehicle.settings.name)
+  }
 
-  def moveWithTheta(player: Player, moveInfo: MoveInfo): Double = {
-    player.pilotStrategy match {
-      case Agile => AgilePlayer.evadeOrPursue(player, moveInfo)
-      case Chauffeur => ChauffeurPlayer.evadeOrPursue(player, moveInfo)
-      case HCMerz => HCMerzPlayer.evadeOrPursue(player, moveInfo)
+  case class MoveInfo(player: Player,
+                      myTheta: Double, relPosition: Vector3r, opponentsTheta: Double,
+                      myPosition: Vector3r, opponentsPosition: Vector3r,
+                      time: Long = System.currentTimeMillis())
+
+  object MoveInfo {
+    implicit val writes: Writes[MoveInfo] = Json.writes[MoveInfo]
+  }
+
+  def moveWithTheta(moveInfo: MoveInfo): Double = {
+    moveInfo.player.pilotStrategy match {
+      case Agile => AgilePlayer.evadeOrPursue(moveInfo)
+      case Chauffeur => ChauffeurPlayer.evadeOrPursue(moveInfo)
+      case HCMerz => HCMerzPlayer.evadeOrPursue(moveInfo)
     }
   }
 

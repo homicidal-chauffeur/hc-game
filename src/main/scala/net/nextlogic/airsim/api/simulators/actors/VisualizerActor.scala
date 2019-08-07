@@ -34,8 +34,6 @@ class VisualizerActor(val visualizer: Option[SimulationPanel], val captureDistan
       visualizer.foreach( _.addSegment(PathSegment(vehicleSettings, position)) )
 
     case Path(path, vehicleSettings) =>
-      logger.debug(s"Path for ${vehicleSettings.name}:")
-      logger.debug("\n" + path.map(p => s"(${p.x},${p.y})").mkString(", "))
       // setPath(vis, pilotType, path)
     case Stop =>
       logger.debug("Stopping visualizer...")
