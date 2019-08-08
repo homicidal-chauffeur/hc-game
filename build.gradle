@@ -1,8 +1,14 @@
+buildscript {
+    dependencies {
+        classpath "org.postgresql:postgresql:42.2.5"
+    }
+}
+
 plugins {
     id 'scala'
     id 'java'
-//    id 'org.jetbrains.kotlin.jvm' version '1.3.41'
     id 'application'
+    id "org.flywaydb.flyway" version "5.2.4"
 }
 
 group 'net.nextlogic.airsim'
@@ -26,8 +32,11 @@ dependencies {
     implementation "org.msgpack:msgpack-core:0.8.13"
     implementation "com.github.stampery:msgpack-rpc:0.7.1"
 
-
     implementation "com.typesafe.play:play-json_2.12:2.7.4"
+    implementation "com.typesafe.slick:slick_2.12:3.2.0"
+    implementation "com.typesafe.slick:slick-hikaricp_2.12:3.2.0"
+    implementation "org.slf4j:slf4j-nop:1.6.4"
+    implementation "org.postgresql:postgresql:42.2.5"
     implementation 'com.opencsv:opencsv:4.6'
 
     compile group: 'com.typesafe.akka', name: 'akka-actor_2.12', version: '2.5.23'
@@ -47,9 +56,6 @@ dependencies {
 
 
 
-//    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-//    implementation 'com.beust:klaxon:5.0.1'
-//    compile "org.jetbrains.kotlin:kotlin-reflect:1.3.41"
 }
 
 jar {
@@ -68,9 +74,9 @@ task spec(dependsOn: ['testClasses'], type: JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
 }
 
-//compileKotlin {
-//    kotlinOptions.jvmTarget = "1.8"
-//}
-//compileTestKotlin {
-//    kotlinOptions.jvmTarget = "1.8"
-//}
+flyway {
+    driver='org.postgresql.Driver'
+    url='jdbc:postgresql://nl3/nextlgc_pe_game'
+    user='nextlgc'
+    password='dasa9045'
+}

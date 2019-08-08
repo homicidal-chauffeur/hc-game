@@ -8,14 +8,16 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.event.Logging
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.MoveInfo
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.Path
-import net.nextlogic.airsim.api.simulators.actors.RefereeActor.{Capture, Start}
+import net.nextlogic.airsim.api.persistance.dao.ResultsDAO
+import net.nextlogic.airsim.api.simulators.actors.RefereeActor.Start
 import net.nextlogic.airsim.api.simulators.actors.ResultsWriterActor.{ResultsFile, WriteFile}
 import net.nextlogic.airsim.api.simulators.actors.SimulationActor.StopSimulation
-import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
+import net.nextlogic.airsim.api.simulators.settings.{Capture, SimulatorSettings}
 import net.nextlogic.airsim.api.utils.MultirotorState
 import play.api.libs.json.{Format, Json, Writes}
 
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 
 
 
@@ -40,6 +42,8 @@ object ResultsWriterActor {
 
 class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLogging {
   val logger = Logging(context.system, this)
+  implicit val executionContext: ExecutionContext = context.dispatcher
+
   val telemetry: mutable.Map[String, Seq[MultirotorState]] = mutable.Map[String, Seq[MultirotorState]]()
   val moves: mutable.Queue[MoveInfo] = mutable.Queue[MoveInfo]()
   val captures: mutable.Queue[Capture] = mutable.Queue[Capture]()
@@ -81,8 +85,15 @@ class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLo
       } catch {
         case e: Exception => logger.error(s"Couldn't save the results with error ${e.getMessage}")
       } finally {
-        context.parent ! StopSimulation
       }
+
+      try {
+        ResultsDAO.saveResults(results)
+      } catch {
+        case e: Exception => logger.error(s"Couldn't save the results in the DB with error ${e.getMessage}")
+      }
+
+      context.parent ! StopSimulation
 
       logger.debug("Written results and stopping the simulation...")
 

@@ -6,6 +6,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import net.nextlogic.airsim.api.gameplay.telemetry.RelativePositionActor
 import net.nextlogic.airsim.api.simulators.actors.RefereeActor._
+import net.nextlogic.airsim.api.simulators.settings.Capture
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
@@ -23,7 +24,6 @@ object RefereeActor {
   case object Stop
   case object PlayTimeReached
   case object CheckIfGameOver
-  case class Capture(distance: Double, time: Long = System.currentTimeMillis())
 }
 
 class RefereeActor(settings: GameSettings) extends Actor with ActorLogging with Timers {

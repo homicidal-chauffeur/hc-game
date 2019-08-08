@@ -5,9 +5,9 @@ import akka.testkit.{ImplicitSender, TestKit}
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.{MoveInfo, Player}
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.Path
-import net.nextlogic.airsim.api.simulators.actors.RefereeActor.{Capture, Start}
+import net.nextlogic.airsim.api.simulators.actors.RefereeActor.Start
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings.{Evade, HCMerz}
-import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
+import net.nextlogic.airsim.api.simulators.settings.{Capture, SimulatorSettings}
 import net.nextlogic.airsim.api.utils.{MultirotorStateUtils, Quaternionr, Vector3r, VehicleSettings}
 import org.junit.runner.RunWith
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}

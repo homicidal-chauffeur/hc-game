@@ -26,6 +26,8 @@ object SimulatorSettings {
 
 }
 
+case class Capture(distance: Double, time: Long = System.currentTimeMillis())
+
 case class SimulatorSettings(ip: String = Constants.IP,
                              port: Int = Constants.PORT,
                              gameType: GameType = SimulatorSettings.HCMerzSimulation,
