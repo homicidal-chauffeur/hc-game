@@ -68,7 +68,7 @@ public class Simulator {
         this.gamma = g;
         this.beta = b;
 
-        String ipAddress = "10.10.0.82"; // localhost
+        String ipAddress = "35.189.49.107"; // localhost
         String eVehicle = "Evader";
         String pVehicle = "Pursuer";
 
@@ -184,7 +184,7 @@ public class Simulator {
 
                 updatePlot(vis);
 
-                Thread.sleep(100);
+                // Thread.sleep(100);
                 t += 0.1;
             }
 
@@ -228,7 +228,7 @@ public class Simulator {
 
             r_init = (Math.floorDiv(count, 5) + rNum) * captureL;
             theta_init = Math.floorDiv(count, 5)*2*Math.PI + Math.floorMod(count,  5)*Math.PI/4;
-            eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), planeHeight - 100);
+            eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), altitude);
             // reset(eInitPos);
 
             //Thread.sleep((long) TIMEOUT*1000);
