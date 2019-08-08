@@ -1,14 +1,14 @@
 package net.nextlogic.airsim.api.simulators.actors
 
 import akka.actor.ActorSystem
-import akka.testkit.{EventFilter, ImplicitSender, TestKit}
+import akka.testkit.{ImplicitSender, TestKit}
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.{MoveInfo, Player}
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.Path
 import net.nextlogic.airsim.api.simulators.actors.RefereeActor.{Capture, Start}
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings.{Evade, HCMerz}
 import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings
-import net.nextlogic.airsim.api.utils.{MultirotorStateUtils, Vector3r, VehicleSettings}
+import net.nextlogic.airsim.api.utils.{MultirotorStateUtils, Quaternionr, Vector3r, VehicleSettings}
 import org.junit.runner.RunWith
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import org.scalatestplus.junit.JUnitRunner
@@ -29,7 +29,10 @@ class ResultsWriterSpec extends TestKit(ActorSystem("BasicSpec"))
       //}
 
       val player = Player(Evade, HCMerz, 25.3, 1.4, 1000, AirSimBaseClient("0.0.0.0", 8080, VehicleSettings("Testy", Evade)))
-      val move = MoveInfo(player, 1.5, Vector3r(10, 20, 30), 2.5, Vector3r(5, 6, 7), Vector3r(7, 8, 9))
+      val move = MoveInfo(
+        player, 1.5, Vector3r(10, 20, 30), 2.5, Vector3r(5, 6, 7), Vector3r(7, 8, 9),
+        Quaternionr(1, 2, 3, 4), Quaternionr(4, 3, 2, 1)
+      )
 
       writer ! move
       writer ! move

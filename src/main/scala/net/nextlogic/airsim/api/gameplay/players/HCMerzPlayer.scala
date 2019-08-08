@@ -22,16 +22,16 @@ object HCMerzPlayer extends BasePlayer {
     val phi =
       if ((x * x + (y - minR) * (y - minR)) < minR * minR) {
         System.out.println("In left turning circle")
-        moveInfo.opponentsTheta + Math.atan2(y + minR, x)
+        moveInfo.oppTheta + Math.atan2(y + minR, x)
       }
       else if ((x * x + (y + minR) * (y + minR)) < minR * minR) {
         System.out.println("In right turning circle")
-        moveInfo.opponentsTheta + Math.atan2(y - minR, x)
+        moveInfo.oppTheta + Math.atan2(y - minR, x)
       }
       else if (Math.hypot(x, y) < minR) {
-        moveInfo.opponentsTheta + Math.atan2(y, x) + Math.PI / 2
+        moveInfo.oppTheta + Math.atan2(y, x) + Math.PI / 2
       }
-      else moveInfo.opponentsTheta + Math.atan2(y, x)
+      else moveInfo.oppTheta + Math.atan2(y, x)
 
     steerEvade(phi)
   }

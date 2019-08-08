@@ -18,9 +18,9 @@ object RelativePositionActor {
   case class NewTheta(theta: Double, vehicleSettings: VehicleSettings)
   case class RelativePositionWithThetas(relativePosition: Vector3r,
                                         myTheta: Double,
-                                        opponentsTheta: Double,
+                                        oppTheta: Double,
                                         myPosition: Vector3r, oppPosition: Vector3r,
-                                        myThetaFromOrientation: Double, oppThetaFromOrientation: Double)
+                                        myOrientation: Quaternionr, oppOrientation: Quaternionr)
 }
 
 class RelativePositionActor() extends Actor with ActorLogging with Timers {
@@ -35,7 +35,7 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
   def startedReceive: Receive = {
     case ForVehicle(myVehicleSettings) =>
       val myPosition = positions.get(myVehicleSettings)
-      val myThetaFromOrientation = orientations.get(myVehicleSettings).map(_.yaw).getOrElse(0.0d)
+      val myOrientation = orientations.getOrElse(myVehicleSettings, Quaternionr())
       val myTheta = thetas.getOrElse(myVehicleSettings, 0.0d)
 
       val opponents = positions.keys.filter(vs => vs.actionType != myVehicleSettings.actionType)
@@ -43,13 +43,13 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
 
       val relPosition = if (myPosition.isDefined && opponents.nonEmpty) {
         val relPositions = opponents.map { opponent =>
-          val oppThetaFromOrientation = orientations.get(opponent).map(_.yaw).getOrElse(0.0d)
+          val oppOrientation = orientations.getOrElse(opponent, Quaternionr())
           RelativePositionWithThetas(
             calculateRelPosition(myPosition.get, myTheta, positions(opponent)),
             myTheta,
             thetas.getOrElse(opponent, 0.0d),
             myPosition.get, positions(opponent),
-            myThetaFromOrientation, oppThetaFromOrientation
+            myOrientation, oppOrientation
           )
         }
         // TODO how to determine the shortest relative position???

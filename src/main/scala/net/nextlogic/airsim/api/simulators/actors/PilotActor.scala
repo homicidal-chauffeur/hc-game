@@ -66,9 +66,9 @@ class PilotActor(player: PlayerRouter.Player, resultsWriter: ActorRef) extends A
         case Some(relPosition) =>
           val moveInfo = MoveInfo(
             player,
-            relPosition.myTheta, relPosition.relativePosition, relPosition.opponentsTheta,
+            relPosition.myTheta, relPosition.relativePosition, relPosition.oppTheta,
             relPosition.myPosition, relPosition.oppPosition,
-            relPosition.myThetaFromOrientation, relPosition.oppThetaFromOrientation
+            relPosition.myOrientation, relPosition.oppOrientation
           )
           val newTheta = PlayerRouter.moveWithTheta(moveInfo)
           // logger.debug(s"${player.vehicle.settings.name}: ${player.actionType} with theta ${newTheta} and relative position ${relPosition.relativePosition}...")

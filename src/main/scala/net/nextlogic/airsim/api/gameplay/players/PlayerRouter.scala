@@ -2,7 +2,7 @@ package net.nextlogic.airsim.api.gameplay.players
 
 import net.nextlogic.airsim.api.gameplay.AirSimBaseClient
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings._
-import net.nextlogic.airsim.api.utils.Vector3r
+import net.nextlogic.airsim.api.utils.{Quaternionr, Vector3r}
 import play.api.libs.json.{JsValue, Json, Writes}
 
 
@@ -15,9 +15,9 @@ object PlayerRouter {
   }
 
   case class MoveInfo(player: Player,
-                      myTheta: Double, relPosition: Vector3r, opponentsTheta: Double,
-                      myPosition: Vector3r, opponentsPosition: Vector3r,
-                      myThetaFromOrientation: Double, oppThetaFromOrientation: Double,
+                      myTheta: Double, relPosition: Vector3r, oppTheta: Double,
+                      myPosition: Vector3r, oppPosition: Vector3r,
+                      myOrientation: Quaternionr, oppOrientation: Quaternionr,
                       time: Long = System.currentTimeMillis())
 
   object MoveInfo {

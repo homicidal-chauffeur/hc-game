@@ -58,14 +58,14 @@ class RelativePositionActorSpec extends TestKit(ActorSystem("BasicSpec"))
           relPos ! ForVehicle(v1)
           val reply = expectMsgType[Option[RelativePositionWithThetas]]
           assert(reply.isDefined)
-          reply.get.opponentsTheta shouldBe theta2
+          reply.get.oppTheta shouldBe theta2
           reply.get.relativePosition shouldBe RelativePosition.relativePosTo2D(p1, p2, theta)
 
           relPos ! ForVehicle(v2)
           val reply2 = expectMsgType[Option[RelativePositionWithThetas]]
           println(reply2)
           assert(reply2.isDefined)
-          reply2.get.opponentsTheta shouldBe theta
+          reply2.get.oppTheta shouldBe theta
           reply2.get.relativePosition shouldBe RelativePosition.relativePosTo2D(p2, p1, theta2)
         }
 
