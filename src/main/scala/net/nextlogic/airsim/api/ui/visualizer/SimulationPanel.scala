@@ -5,7 +5,7 @@ import java.awt.{BasicStroke, Color, Dimension, Graphics2D}
 
 import net.nextlogic.airsim.api.simulators.settings.PilotSettings
 import net.nextlogic.airsim.api.ui.common.UiUtils
-import net.nextlogic.airsim.api.utils.{Vector3r, VehicleSettings}
+import net.nextlogic.airsim.api.utils.{Quaternionr, Vector3r, VehicleSettings}
 
 import scala.collection.mutable
 import scala.swing.Panel
@@ -17,8 +17,13 @@ class SimulationPanel() extends Panel {
     .foldLeft(Map[String, Color]())( (acc, settings) => acc.updated(settings.name, settings.color.color))
 
   var paths: mutable.Map[VehicleSettings, Path2D] = mutable.Map[VehicleSettings, Path2D]()
+  var currentTime: Long = 0L
   val initialScale = 50.0
   val offset = 10
+
+  val pursuerIcon = Icons.fighterJet
+  val evaderIcon = Icons.plane
+
 
   preferredSize = new Dimension(1200, 800)
 
@@ -26,6 +31,7 @@ class SimulationPanel() extends Panel {
     // println(s"${segment.vehicleSettings.name}: Adding segment to ${segment.point} ")
     val path = paths.getOrElse(segment.vehicleSettings, newPath(segment.point))
     path.lineTo(segment.point.x * initialScale, segment.point.y * initialScale)
+    currentTime = segment.time
     paths.update(segment.vehicleSettings, path)
     repaint()
     path
@@ -85,21 +91,39 @@ class SimulationPanel() extends Panel {
     g2.setStroke(new BasicStroke(4))
     g2.setPaint(Color.DARK_GRAY)
     g2.drawString("Playing Field", 200, 100)
+    g2.drawString(s"Time: $currentTime ms", 100, 100)
 
-    if (paths.isEmpty) return
+    if (paths.isEmpty) {
+      g2.setPaint(Color.RED)
+
+      g2.fill(pursuerIcon.createTransformedShape(new AffineTransform(10, 0, 0, 10, 150, 150)))
+
+
+      g2.setPaint(Color.BLUE)
+      val t = evaderIcon.createTransformedShape(AffineTransform.getTranslateInstance(180, 147))
+      g2.fill(t)
+      return
+    }
 
     val transformation = calculateTransformation()
 
     paths.foreach{ typeWithPath =>
       g2.setPaint(colors.getOrElse(typeWithPath._1.name, Color.ORANGE))
       val scaled = typeWithPath._2.createTransformedShape(transformation)
-      val bounds = scaled.getBounds2D
       // println(s"Drawing path at ${bounds.getMinX}x${bounds.getMinY} to ${bounds.getMaxX}x${bounds.getMaxY}")
       g2.draw(scaled)
+
+      val icon = if (typeWithPath._1.name == "Evader") evaderIcon else pursuerIcon
+      icon.moveTo(typeWithPath._2.getCurrentPoint.getX, typeWithPath._2.getCurrentPoint.getY)
+
+      val scaledIcon = icon.createTransformedShape(transformation)
+      g2.fill(scaledIcon)
+
     }
+
 
   }
 
 }
 
-case class PathSegment(vehicleSettings: VehicleSettings, point: Vector3r)
+case class PathSegment(vehicleSettings: VehicleSettings, point: Vector3r, orientation: Quaternionr, time: Long)
