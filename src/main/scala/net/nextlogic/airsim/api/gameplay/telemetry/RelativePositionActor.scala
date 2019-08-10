@@ -14,7 +14,7 @@ object RelativePositionActor {
   case class ForVehicle(vehicleSettings: VehicleSettings)
   case object Distance
   case object Stop
-  case class Start(trackers: Seq[ActorRef])
+  case class Start(trackers: Seq[ActorRef], startTime: Long)
   case class NewTheta(theta: Double, vehicleSettings: VehicleSettings)
   case class RelativePositionWithThetas(relativePosition: Vector3r,
                                         myTheta: Double,
@@ -32,7 +32,7 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
 
   override def receive: Receive = stoppedReceive
 
-  def startedReceive: Receive = {
+  def startedReceive(startTime: Long): Receive = {
     case ForVehicle(myVehicleSettings) =>
       val myPosition = positions.get(myVehicleSettings)
       val myOrientation = orientations.getOrElse(myVehicleSettings, Quaternionr())
@@ -94,8 +94,8 @@ class RelativePositionActor() extends Actor with ActorLogging with Timers {
 
     case ForVehicle(_) => None
     case Distance => None
-    case Start(trackers) =>
-      context.become(startedReceive)
+    case Start(trackers, startTime) =>
+      context.become(startedReceive(startTime))
       trackers.foreach(t => t ! PositionTrackerActor.Start)
   }
 

@@ -23,7 +23,7 @@ object RefereeActor {
   case class Start(startTime: Long = System.currentTimeMillis())
   case object Stop
   case object PlayTimeReached
-  case object CheckIfGameOver
+  case object CheckIfCaptured
 }
 
 class RefereeActor(settings: GameSettings) extends Actor with ActorLogging with Timers {
@@ -33,14 +33,14 @@ class RefereeActor(settings: GameSettings) extends Actor with ActorLogging with 
   implicit val executionContext: ExecutionContext = context.dispatcher
 
   override def receive: Receive = {
-    case Start(_) =>
-      settings.visualizer ! VisualizerActor.Start
+    case startWithTime: Start =>
+      settings.visualizer ! startWithTime
       settings.pilots.foreach(p => p ! PilotActor.Start)
       timers.startSingleTimer(PlayTimeReached, PlayTimeReached, settings.playTime)
-      timers.startPeriodicTimer(CheckIfGameOver, CheckIfGameOver, 100.millis)
+      timers.startPeriodicTimer(CheckIfCaptured, CheckIfCaptured, 100.millis)
 
     case Stop =>
-      timers.cancel(CheckIfGameOver)
+      timers.cancel(CheckIfCaptured)
       timers.cancel(PlayTimeReached)
       settings.pilots.foreach(p => p ! PilotActor.Stop)
       settings.relativePosition ! RelativePositionActor.Stop
@@ -51,7 +51,7 @@ class RefereeActor(settings: GameSettings) extends Actor with ActorLogging with 
       logger.debug(s"Escaped - play time ${settings.playTime} reached")
       self ! Stop
 
-    case CheckIfGameOver =>
+    case CheckIfCaptured =>
       val distFuture = (settings.relativePosition ? RelativePositionActor.Distance).mapTo[Option[Double]]
       distFuture.map(distanceOpt => distanceOpt.foreach{ distance =>
         if (distance < settings.captureDistance) {

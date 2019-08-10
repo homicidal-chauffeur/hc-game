@@ -68,7 +68,7 @@ class SimulationActor(settings: SimulatorSettings, visualizerPanel: Option[Simul
       val referee = context.actorOf(RefereeActor.props(gameSettings))
       val startWithTime = RefereeActor.Start()
 
-      relativePositionAct ! RelativePositionActor.Start(trackers)
+      relativePositionAct ! RelativePositionActor.Start(trackers, startWithTime.startTime)
       resultsWriter ! startWithTime
 
       referee ! startWithTime
