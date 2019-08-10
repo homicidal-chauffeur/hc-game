@@ -1,5 +1,6 @@
 package net.nextlogic.airsim.api.simulators.settings
 
+import net.nextlogic.airsim.api.simulators.settings.PilotSettings.Evade
 import net.nextlogic.airsim.api.simulators.settings.SimulatorSettings.GameType
 import net.nextlogic.airsim.api.utils.Constants
 import play.api.libs.json.{Format, JsValue, Json, Writes}
@@ -37,7 +38,10 @@ case class SimulatorSettings(ip: String = Constants.IP,
                              locationUpdateDelay: Int = Constants.locationUpdateDelay,
                              gameTime: Int = Constants.gameTime,
                              pilotSettings: Seq[PilotSettings] = Seq()) {
-  def captureDistance: Double = beta * Constants.turningRadius
+  def captureDistance: Double = beta * pilotSettings
+    .filter(_.actionType == Evade)
+    .map(_.turningRadius)
+    .headOption.getOrElse(Constants.turningRadius)
 
   def maxVelocityEvader: Double = gamma * maxVelocityPursuer
 }
