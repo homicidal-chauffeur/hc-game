@@ -2,7 +2,7 @@ package net.nextlogic.airsim.api.utils
 
 object Constants {
 //  val IP = "10.10.0.82"
-  val IP = "35.189.49.107"
+  val IP = "35.189.38.0"
   val PORT = 41451
 
   val eVehicle = "Evader"
@@ -28,7 +28,7 @@ object Constants {
 
   val pursuerVelocity = 10 // velocity of pursuer, m/s
 
-  val turningRadius = 8 // turning radius of pursuer, m
+  val turningRadius: Double = 8.0 // turning radius of pursuer, m
   val timeStepForAngleChange = 0.1 //deltaT
 
   var gameType = 1 // game type

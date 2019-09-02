@@ -6,6 +6,7 @@ import java.time.{Instant, LocalDateTime, ZoneId}
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.event.Logging
+import com.typesafe.config.ConfigFactory
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.MoveInfo
 import net.nextlogic.airsim.api.gameplay.telemetry.PositionTrackerActor.Path
 import net.nextlogic.airsim.api.persistance.dao.ResultsDAO
@@ -78,6 +79,8 @@ class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLo
 
       val t = LocalDateTime.now()
       val st = t.format(DateTimeFormatter.ISO_DATE_TIME).replace(":", "-")
+      val directory = new File("results/json")
+      if (!directory.exists) directory.mkdirs
       val pw = new PrintWriter(new File(s"results/json/$st.json" ))
       try {
         pw.write(Json.toJson(results).toString())
@@ -88,7 +91,10 @@ class ResultsWriterActor(settings: SimulatorSettings) extends Actor with ActorLo
       }
 
       try {
-        ResultsDAO.saveResults(results)
+        val conf = ConfigFactory.load("application.conf")
+        if (conf.hasPathOrNull("database") ) {
+          ResultsDAO.saveResults(results)
+        }
       } catch {
         case e: Exception => logger.error(s"Couldn't save the results in the DB with error ${e.getMessage}")
       }

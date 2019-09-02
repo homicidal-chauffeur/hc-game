@@ -19,6 +19,8 @@ trait BasePlayer {
   }
 
   def move(player: PlayerRouter.Player, theta: Double): Unit = {
+    // calculate unit vector from Theta:
+    // u = [cos(theta),sin(theta)]
     val velocity = Vector3r(
       (player.maxVelocity * Math.cos(theta)).toFloat,
       (player.maxVelocity * Math.sin(theta)).toFloat

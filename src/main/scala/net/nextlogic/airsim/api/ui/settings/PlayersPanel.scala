@@ -10,7 +10,7 @@ import scala.swing.{BoxPanel, GridPanel, Label, Orientation}
 class PlayersPanel(var players: mutable.Seq[PilotSettings]) extends BoxPanel(Orientation.Vertical) {
   val header: GridPanel = new GridPanel(1, 5) {
     contents ++= Seq(
-      new Label("Player Type"),
+      new Label("Team"),
       new Label("Strategy"),
       new Label("AirSim Name"),
       new Label("Color"),

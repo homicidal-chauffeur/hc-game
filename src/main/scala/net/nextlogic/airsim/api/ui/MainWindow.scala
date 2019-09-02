@@ -10,11 +10,10 @@ import swing._
 
 object MainWindow  extends SimpleSwingApplication {
   val visualizer = new SimulationPanel()
+  val settings = new SettingsPanel(SimulatorSettings(pilotSettings = UiUtils.defaultPlayers), visualizer)
 
   override def top: Frame = new MainFrame {
     title = "Simulator & Game Settings"
-
-    val settings = new SettingsPanel(SimulatorSettings(pilotSettings = UiUtils.defaultPlayers), visualizer)
 
     val panel = new BorderPanel {
       layout(settings) = North

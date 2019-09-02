@@ -60,12 +60,12 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'net.nextlogic.airsim.Simulator'
+        attributes 'Main-Class': 'net.nextlogic.airsim.api.ui.MainWindow'
     }
 }
 
 application {
-    mainClassName = 'net.nextlogic.airsim.Simulator'
+    mainClassName = 'net.nextlogic.airsim.api.ui.MainWindow'
 }
 
 task spec(dependsOn: ['testClasses'], type: JavaExec) {

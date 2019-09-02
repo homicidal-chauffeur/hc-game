@@ -38,10 +38,10 @@ case class SimulatorSettings(ip: String = Constants.IP,
                              locationUpdateDelay: Int = Constants.locationUpdateDelay,
                              gameTime: Int = Constants.gameTime,
                              pilotSettings: Seq[PilotSettings] = Seq()) {
-  def captureDistance: Double = beta * pilotSettings
+  def captureDistance: Double = pilotSettings
     .filter(_.actionType == Evade)
     .map(_.turningRadius)
-    .headOption.getOrElse(Constants.turningRadius)
+    .headOption.getOrElse(Constants.turningRadius) * beta
 
   def maxVelocityEvader: Double = gamma * maxVelocityPursuer
 }

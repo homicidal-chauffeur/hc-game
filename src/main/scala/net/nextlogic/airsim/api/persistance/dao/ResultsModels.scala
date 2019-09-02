@@ -5,6 +5,7 @@ import java.sql.Timestamp
 import net.nextlogic.airsim.api.gameplay.players.PlayerRouter.MoveInfo
 import net.nextlogic.airsim.api.simulators.settings.Capture
 import net.nextlogic.airsim.api.simulators.settings.{PilotSettings, SimulatorSettings}
+import net.nextlogic.airsim.api.utils.MultirotorState
 
 
 case class SimulationDb(startTime: Long, date: Timestamp, tags: Option[String], id: Long = 0)
@@ -39,7 +40,25 @@ case class MoveDb(simulationId: Long,
                   myOrientationX: Double, myOrientationY: Double, myOrientationZ: Double, myOrientationW: Double,
                   oppOrientationX: Double, oppOrientationY: Double, oppOrientationZ: Double, oppOrientationW: Double,
                   id: Long = 0
-                     )
+                 )
+
+case class KinematicsPositionDb(simulationId: Long,
+                                 time: Long,
+                                 pilotSettingsId: Long,
+                                 positionX: Double, positionY: Double, positionZ: Double,
+                                 orientationX: Double, orientationY: Double, orientationZ: Double, orientationW: Double,
+                                 id: Long = 0
+                                )
+case class KinematicsVelocityDb(
+                                 simulationId: Long,
+                                 time: Long,
+                                 pilotSettingsId: Long,
+                                 linearVelocityX: Double, linearVelocityY: Double, linearVelocityZ: Double,
+                                 angularVelocityX: Double, angularVelocityY: Double, angularVelocityZ: Double,
+                                 linearAccelerationX: Double, linearAccelerationY: Double, linearAccelerationZ: Double,
+                                 angularAccelerationX: Double, angularAccelerationY: Double, angularAccelerationZ: Double,
+                                 id: Long = 0
+                               )
 
 object ResultsModels {
   def fromSimulatorSettings(simulationId: Long, s: SimulatorSettings): SimulationSettingsDb =
@@ -68,6 +87,24 @@ object ResultsModels {
       m.oppPosition.x, m.oppPosition.y, m.oppPosition.z,
       m.myOrientation.x, m.myOrientation.y, m.myOrientation.z, m.myOrientation.w,
       m.oppOrientation.x, m.oppOrientation.y, m.oppOrientation.z, m.oppOrientation.w
+    )
+
+  def positionFromKinematics(simulationId: Long, playerConfigId: Long, m: MultirotorState): KinematicsPositionDb =
+    KinematicsPositionDb(
+      simulationId,
+      m.timestamp, playerConfigId,
+      m.kinematicsEstimated.position.x, m.kinematicsEstimated.position.y, m.kinematicsEstimated.position.z,
+      m.kinematicsEstimated.orientation.x, m.kinematicsEstimated.orientation.y, m.kinematicsEstimated.orientation.z, m.kinematicsEstimated.orientation.w
+    )
+
+  def velocityFromKinematics(simulationId: Long, playerConfigId: Long, m: MultirotorState): KinematicsVelocityDb =
+    KinematicsVelocityDb(
+      simulationId,
+      m.timestamp, playerConfigId,
+      m.kinematicsEstimated.linearVelocity.x, m.kinematicsEstimated.linearVelocity.y, m.kinematicsEstimated.linearVelocity.z,
+      m.kinematicsEstimated.angularVelocity.x, m.kinematicsEstimated.angularVelocity.y, m.kinematicsEstimated.angularVelocity.z,
+      m.kinematicsEstimated.linearAcceleration.x, m.kinematicsEstimated.linearAcceleration.y, m.kinematicsEstimated.linearAcceleration.z,
+      m.kinematicsEstimated.angularAcceleration.x, m.kinematicsEstimated.angularAcceleration.y, m.kinematicsEstimated.angularAcceleration.z,
     )
 
 }

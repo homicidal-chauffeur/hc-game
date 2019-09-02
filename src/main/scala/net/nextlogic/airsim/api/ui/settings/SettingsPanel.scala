@@ -51,7 +51,7 @@ class SettingsPanel(initialSettings: SimulatorSettings, val visualizer: Simulati
   val buttons: GridPanel = new GridPanel(1, 6) {
     contents ++= Seq(
       new Label(), new Label(), new Label(), new Label(),
-      startSim, pauseSim
+      startSim //, pauseSim
     )
     border = BorderFactory.createEmptyBorder(16, 8, 8, 8)
   }
@@ -66,10 +66,7 @@ class SettingsPanel(initialSettings: SimulatorSettings, val visualizer: Simulati
 
   reactions += {
     case ButtonClicked(`startSim`) =>
-      simSettings.contents.foreach(c => c.enabled = false)
-      playersTable.enabled = false
-      buttons.contents.filter(_ != pauseSim).foreach(c => c.enabled = false)
-
+      setEnabled(false)
       val currentSettings = settings
       visualizer.clear()
       visualizer.pilotSettings = currentSettings.pilotSettings
@@ -77,9 +74,7 @@ class SettingsPanel(initialSettings: SimulatorSettings, val visualizer: Simulati
       SimulationRunner.run(settings, Some(visualizer))
 
     case ButtonClicked(`pauseSim`) =>
-      simSettings.contents.foreach(c => c.enabled = true)
-      playersTable.enabled = true
-      buttons.contents.foreach(c => c.enabled = true)
+      setEnabled(true)
   }
 
   border = BorderFactory.createEmptyBorder(16, 8, 8, 8)
@@ -103,5 +98,10 @@ class SettingsPanel(initialSettings: SimulatorSettings, val visualizer: Simulati
     )
   }
 
+  def setEnabled(enabled: Boolean): Unit = {
+    simSettings.contents.foreach(c => c.enabled = enabled)
+    playersTable.enabled = enabled
+    buttons.contents.filter(_ != pauseSim).foreach(c => c.enabled = enabled)
+  }
 
 }

@@ -17,6 +17,7 @@ class SimulationPanel() extends Panel {
     .foldLeft(Map[String, Color]())( (acc, settings) => acc.updated(settings.name, settings.color.color))
 
   var paths: mutable.Map[VehicleSettings, Path2D] = mutable.Map[VehicleSettings, Path2D]()
+  var orientations = mutable.Map[String, Double]()
   var currentTime: Long = 0L
   val initialScale = 50.0
   val offset = 10
@@ -29,6 +30,7 @@ class SimulationPanel() extends Panel {
 
   def addSegment(segment: PathSegment): Path2D = {
     // println(s"${segment.vehicleSettings.name}: Adding segment to ${segment.point} ")
+    orientations.update(segment.vehicleSettings.name, segment.orientation.yaw)
     val path = paths.getOrElse(segment.vehicleSettings, newPath(segment.point))
     path.lineTo(segment.point.x * initialScale, segment.point.y * initialScale)
     currentTime = segment.time
@@ -94,14 +96,13 @@ class SimulationPanel() extends Panel {
     g2.drawString(s"Time: $currentTime ms", 100, 100)
 
     if (paths.isEmpty) {
-      g2.setPaint(Color.RED)
+      // g2.setPaint(Color.RED)
+      // g2.fill(pursuerIcon.createTransformedShape(AffineTransform.getTranslateInstance(150, 150)))
 
-      g2.fill(pursuerIcon.createTransformedShape(new AffineTransform(10, 0, 0, 10, 150, 150)))
 
-
-      g2.setPaint(Color.BLUE)
-      val t = evaderIcon.createTransformedShape(AffineTransform.getTranslateInstance(180, 147))
-      g2.fill(t)
+      // g2.setPaint(Color.BLUE)
+      // val t = evaderIcon.createTransformedShape(AffineTransform.getTranslateInstance(180, 147))
+      // g2.fill(t)
       return
     }
 
@@ -113,12 +114,17 @@ class SimulationPanel() extends Panel {
       // println(s"Drawing path at ${bounds.getMinX}x${bounds.getMinY} to ${bounds.getMaxX}x${bounds.getMaxY}")
       g2.draw(scaled)
 
+      /*
       val icon = if (typeWithPath._1.name == "Evader") evaderIcon else pursuerIcon
-      icon.moveTo(typeWithPath._2.getCurrentPoint.getX, typeWithPath._2.getCurrentPoint.getY)
-
-      val scaledIcon = icon.createTransformedShape(transformation)
+      val iconTransform = transformation.clone().asInstanceOf[AffineTransform]
+      iconTransform.rotate(orientations.getOrElse(typeWithPath._1.name, 0))
+      iconTransform.translate(
+        iconTransform.getTranslateX + typeWithPath._2.getCurrentPoint.getX,
+        iconTransform.getTranslateY + typeWithPath._2.getCurrentPoint.getY
+      )
+      val scaledIcon = icon.createTransformedShape(iconTransform)
       g2.fill(scaledIcon)
-
+      */
     }
 
 

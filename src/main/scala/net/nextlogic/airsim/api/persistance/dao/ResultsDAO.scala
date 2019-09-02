@@ -10,7 +10,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object ResultsDAO {
   val db = Database.forConfig("database")
-//  val db = Database.forURL("jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1", driver="org.h2.Driver")
 
   def saveResults(results: ResultsFile): Future[Long] = {
     val action = for {
@@ -21,6 +20,14 @@ object ResultsDAO {
       _ <- moves ++= results.moves.map(
         m => ResultsModels.fromMoveInfo(simId, pilots.filter(p => p.name == m.player.vehicle.settings.name).head.id , m)
       )
+      _ <- kinematicsPositions ++= results.telemetry.keySet.flatMap(vehicleName =>
+        results.telemetry(vehicleName).map(
+          m => ResultsModels.positionFromKinematics(simId, pilots.filter(p => p.name == vehicleName).head.id, m)
+        ))
+      _ <- kinematicsVelocities ++= results.telemetry.keySet.flatMap(vehicleName =>
+        results.telemetry(vehicleName).map(
+          m => ResultsModels.velocityFromKinematics(simId, pilots.filter(p => p.name == vehicleName).head.id, m)
+        ))
     } yield simId
 
     db.run(action)
@@ -121,4 +128,58 @@ object ResultsDAO {
     ) <> (MoveDb.tupled, MoveDb.unapply)
   }
   def moves = TableQuery[Moves]
+
+  class  KinematicsPositions(tag: Tag) extends Table[KinematicsPositionDb](tag, "kinematics_positions") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def simulationId = column[Long]("simulation_id")
+    def time = column[Long]("time")
+    def playerConfigId = column[Long]("pilot_settings_id")
+
+    def positionX = column[Double]("position_x")
+    def positionY = column[Double]("position_y")
+    def positionZ = column[Double]("position_z")
+
+    def orientationX = column[Double]("orientation_x")
+    def orientationY = column[Double]("orientation_y")
+    def orientationZ = column[Double]("orientation_z")
+    def orientationW = column[Double]("orientation_w")
+
+    def * = (simulationId, time, playerConfigId,
+      positionX, positionY, positionZ,
+      orientationX, orientationY, orientationZ, orientationW,
+      id) <> (KinematicsPositionDb.tupled, KinematicsPositionDb.unapply)
+  }
+  def kinematicsPositions = TableQuery[KinematicsPositions]
+
+  class KinematicsVelocity(tag: Tag) extends Table[KinematicsVelocityDb](tag, "kinematics_velicities") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def simulationId = column[Long]("simulation_id")
+    def time = column[Long]("time")
+    def playerConfigId = column[Long]("pilot_settings_id")
+
+    def linearVelocityX = column[Double]("linear_velocity_x")
+    def linearVelocityY = column[Double]("linear_velocity_y")
+    def linearVelocityZ = column[Double]("linear_velocity_z")
+
+    def angularVelocityX = column[Double]("angular_velocity_x")
+    def angularVelocityY = column[Double]("angular_velocity_y")
+    def angularVelocityZ = column[Double]("angular_velocity_z")
+
+    def linearAccelerationX = column[Double]("linear_acceleration_x")
+    def linearAccelerationY = column[Double]("linear_acceleration_y")
+    def linearAccelerationZ = column[Double]("linear_acceleration_z")
+
+    def angularAccelerationX = column[Double]("angular_acceleration_x")
+    def angularAccelerationY = column[Double]("angular_acceleration_y")
+    def angularAccelerationZ = column[Double]("angular_acceleration_z")
+
+    def * = (simulationId, time, playerConfigId,
+      linearVelocityX, linearVelocityY, linearVelocityZ,
+      angularVelocityX, angularVelocityY, angularVelocityZ,
+      linearAccelerationX, linearAccelerationY, linearAccelerationZ,
+      angularAccelerationX, angularAccelerationY, angularAccelerationZ,
+      id) <> (KinematicsVelocityDb.tupled, KinematicsVelocityDb.unapply)
+  }
+
+  def kinematicsVelocities = TableQuery[KinematicsVelocity]
 }
