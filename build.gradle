@@ -14,7 +14,7 @@ plugins {
 group 'net.nextlogic.airsim'
 version '1.0-SNAPSHOT'
 
-sourceCompatibility = 1.8
+//sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -40,7 +40,10 @@ dependencies {
     implementation 'com.opencsv:opencsv:4.6'
 
     compile group: 'com.typesafe.akka', name: 'akka-actor_2.12', version: '2.5.23'
+    compile group: 'com.typesafe.akka', name: 'akka-stream_2.12', version: '2.5.23'
+    implementation "com.lightbend.akka:akka-stream-alpakka-slick_2.12:1.1.1"
     testCompile group: 'com.typesafe.akka', name: 'akka-testkit_2.12', version: '2.5.23'
+
 
     implementation "org.jfree:jfreesvg:3.4"
 
@@ -65,7 +68,19 @@ jar {
 }
 
 application {
-    mainClassName = 'net.nextlogic.airsim.api.ui.MainWindow'
+    //mainClassName = 'net.nextlogic.airsim.api.ui.MainWindow'
+    mainClassName = 'net.nextlogic.airsim.Simulator'
+}
+
+sourceSets {
+    main {
+        scala {
+            srcDirs = ['src/main/scala', 'src/main/java']
+        }
+        java {
+            srcDirs = []
+        }
+    }
 }
 
 task spec(dependsOn: ['testClasses'], type: JavaExec) {

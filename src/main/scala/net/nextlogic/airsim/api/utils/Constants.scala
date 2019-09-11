@@ -2,7 +2,7 @@ package net.nextlogic.airsim.api.utils
 
 object Constants {
 //  val IP = "10.10.0.82"
-  val IP = "35.189.38.0"
+  val IP = "35.244.124.148"
   val PORT = 41451
 
   val eVehicle = "Evader"

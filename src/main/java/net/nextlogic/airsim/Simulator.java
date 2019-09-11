@@ -5,6 +5,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import net.nextlogic.airsim.gameplay.AirSimStructures.*;
 import net.nextlogic.airsim.gameplay.DronePlayer;
 import net.nextlogic.airsim.gameplay.agile.AgileEvader;
@@ -22,12 +27,14 @@ public class Simulator {
     public final static float planeHeight = -6f;
     public final static float setupVelocity = 10f;
     public final static float setupWaitTime = 10f;
-    public final static float TIMEOUT = 60f;
+    public final static float TIMEOUT = 10f;
 
     public final static float altitude = -30;
 
+    private ExecutorService executor =Executors.newFixedThreadPool(100);
 
-    public final static double baseV = 3; // velocity of pursuer, m/s
+
+    public final static double baseV = 10; // velocity of pursuer, m/s
     public final static double baseR = 8; // turning radius of pursuer, m
 
     public int gameType = 1; // game type
@@ -41,17 +48,16 @@ public class Simulator {
     private DronePlayer pursuer;
     private DronePlayer evader;
 
-    public static void main(String[] args)
-    {
-        if (args.length != 3) {
-            System.out.println("Please specify game-type, speed ratio (gamma), and radius ratio (beta).");
-            System.exit(1);
-        }
+    public static void main(String[] args) {
+//        if (args.length != 3) {
+//            System.out.println("Please specify game-type, speed ratio (gamma), and radius ratio (beta).");
+//            System.exit(1);
+//        }
 
         try {
-            int type = Integer.parseInt(args[0]);
-            double g = Double.parseDouble(args[1]);
-            double b = Double.parseDouble(args[2]);
+            int type = 6; //Integer.parseInt(args[0]);
+            double g = 0.5; //Double.parseDouble(args[1]);
+            double b = 0.8; //Double.parseDouble(args[2]);
 
             Simulator sim = new Simulator(type, g, b);
             sim.run();
@@ -68,7 +74,7 @@ public class Simulator {
         this.gamma = g;
         this.beta = b;
 
-        String ipAddress = "35.189.49.107"; // localhost
+        String ipAddress = "35.244.124.148"; // localhost
         String eVehicle = "Evader";
         String pVehicle = "Pursuer";
 
@@ -131,15 +137,16 @@ public class Simulator {
 
     public void run() throws InterruptedException, FileNotFoundException, UnsupportedEncodingException {
         int rNum = 2; // minimum number of capture radii as initial position
-
         double r_init = rNum*captureL;
         int count = 0;
         double theta_init = 0;
         // eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), planeHeight);
         eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), 0.0f, altitude);
 
-        String folderName = String.format("results/type-%d_g-%.3f_b-%.3f", gameType, gamma, beta);
-        new File(folderName).mkdir();
+        LocalDateTime time = LocalDateTime.now();
+        String st = time.format(DateTimeFormatter.ISO_DATE_TIME).replace(":", "-");
+        String folderName = String.format("results/type-%d_g-%.3f_b-%.3f/%s", gameType, gamma, beta, st);
+        new File(folderName).mkdirs();
 
         String folderPrefix = folderName+"/";
 
@@ -173,19 +180,33 @@ public class Simulator {
             System.out.println("Pursuer's initial position: " + pursuerSimInit);
 
 
-
+            evader.pause();
 
             start = System.currentTimeMillis();
+
             t = 0;
-            while (!pursuer.gameOver() && !evader.gameOver() && (t < 60)) {
+            while (t < 30) {
                 System.out.println("Time " + t);
-                evader.evade();
-                pursuer.pursue();
 
-                updatePlot(vis);
 
-                // Thread.sleep(100);
+//                executor.submit(() -> {
+                    evader.updatePositionData();
+                pursuer.updatePositionData();
+                    evader.evade();
+//                });
+//                executor.submit(() -> {
+                    pursuer.pursue();
+//                });
+
+                executor.submit(() -> {
+                    updatePlot(vis);
+                });
+
+                evader.continueForTime(0.1f);
+                Thread.sleep(100);
                 t += 0.1;
+
+                // if (!pursuer.gameOver() && !evader.gameOver()) break;
             }
 
             double totalTime = (System.currentTimeMillis() - start)/1000;
@@ -231,7 +252,7 @@ public class Simulator {
             eInitPos = new Vector3r((float) (r_init*Math.cos(theta_init)), (float) (r_init*Math.sin(theta_init)), altitude);
             // reset(eInitPos);
 
-            //Thread.sleep((long) TIMEOUT*1000);
+            Thread.sleep((long) TIMEOUT*1000);
         }
 
         evader.reset();

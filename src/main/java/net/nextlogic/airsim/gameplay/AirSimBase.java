@@ -178,6 +178,19 @@ class MultirotorClient extends AirSimClientBase {
 //        return MultirotorStateUtils.isLanded(getMultirotorState());
     }
 
+    public void pause() {
+        this.client.callAsyncApply("simPause", new Object[]{true});
+    }
+
+    public void unPause() {
+        this.client.callAsyncApply("simPause", new Object[]{false});
+    }
+
+    public void continueForTime(float seconds) {
+        this.client.callAsyncApply("simContinueForTime", new Object[]{seconds});
+    }
+
+
     public GeoPoint getGpsLocation() {
         return new GeoPoint(mapCommand("getGpsLocation"));
     }

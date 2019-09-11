@@ -2,6 +2,7 @@ package net.nextlogic.airsim.gameplay.hcm;
 
 import net.nextlogic.airsim.gameplay.DronePlayer;
 import net.nextlogic.airsim.gameplay.Evader;
+import net.nextlogic.airsim.gameplay.SteeringDecision;
 import net.nextlogic.airsim.gameplay.chauffeur.ChauffeurDronePlayer;
 
 import java.awt.geom.Point2D;
@@ -53,7 +54,11 @@ public class HCMerzPursuer extends ChauffeurDronePlayer implements Evader {
             phi = Math.signum(y);
         }
 
-        steeringDecisions.add(new SteeringDecision(relativePos, phi, opponent.getTheta()));
+        steeringDecisions.add(
+                new SteeringDecision(
+                        "Pursuer", relativePos, this.get2DPos(), this.positionTime,
+                        opponent.get2DPos(), opponent.positionTime, theta, opponent.getTheta(), phi)
+        );
 
         steer(phi);
         super.move();

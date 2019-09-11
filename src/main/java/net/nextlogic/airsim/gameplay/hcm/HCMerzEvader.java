@@ -2,6 +2,7 @@ package net.nextlogic.airsim.gameplay.hcm;
 
 import net.nextlogic.airsim.gameplay.DronePlayer;
 import net.nextlogic.airsim.gameplay.Evader;
+import net.nextlogic.airsim.gameplay.SteeringDecision;
 import net.nextlogic.airsim.gameplay.agile.AgileDronePlayer;
 import net.nextlogic.airsim.gameplay.chauffeur.ChauffeurDronePlayer;
 
@@ -54,13 +55,16 @@ public class HCMerzEvader extends AgileDronePlayer implements Evader {
         } else if ((x*x + (y + minR)*(y + minR)) < minR*minR) {
             phi = pTheta + Math.atan2(y-minR, x);;
             System.out.println("In right turning circle");
-        } else if (Math.hypot(x, y) < minR) {
+        } else if (Math.hypot(x, y) < minR * 2) { // if this is set to minR * 2 it will start turning in time to escape
             phi = pTheta + Math.atan2(y, x) + Math.PI/2;
         } else {
             phi = pTheta + Math.atan2(y, x);
         }
 
-        steeringDecisions.add(new SteeringDecision(relativePos, phi, pTheta));
+        steeringDecisions.add(
+                new SteeringDecision("Evader", relativePos, this.get2DPos(), this.positionTime,
+                        opponent.get2DPos(), opponent.positionTime, theta, pTheta, phi)
+        );
 
         steer(phi);
         super.move();

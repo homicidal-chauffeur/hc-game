@@ -33,7 +33,7 @@ public class ChauffeurDronePlayer extends DronePlayer {
 
 //		moveByAngle(-0.1f, 0f, -5f, (float) theta, dt);
 
-        updatePositionData();
+        // updatePositionData();
     }
 
 }

@@ -1,5 +1,7 @@
 package net.nextlogic.airsim.gameplay;
 
+import net.nextlogic.airsim.api.persistance.dao.SteeringDecisionsDAO;
+
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.io.File;
@@ -11,6 +13,7 @@ import java.util.List;
 public class DronePlayer extends MultirotorClient implements Pursuer, Evader {
     public final static float dt = 20f;
     protected Vector3r position; // (x, y, z) position in fixed global frame
+    public long positionTime;
     protected double theta; // orientation in fixed global frame, wrt x-axis
     protected double maxV; // maximum velocity, m/s
     private ArrayList<Point2D> path = new ArrayList<Point2D>(); // history of player movement
@@ -20,24 +23,8 @@ public class DronePlayer extends MultirotorClient implements Pursuer, Evader {
 
     public ArrayList<SteeringDecision> steeringDecisions = new ArrayList<>();
 
-    public class SteeringDecision {
-        private Point2D relativePosition;
-        private Double opponentTheta;
-        private Double phi;
-
-        public SteeringDecision(Point2D relativePosition, Double phi, Double opponentTheta) {
-            this.relativePosition = relativePosition;
-            this.phi = phi;
-            this.opponentTheta = opponentTheta;
-        }
-
-        @Override
-        public String toString() {
-            return relativePosition.getX() + "," + relativePosition.getY() + "," + phi + "," + opponentTheta;
-        }
-    }
-
     public void printSteeringDecisions(String name, PrintWriter resultsFile) {
+        SteeringDecisionsDAO.save(steeringDecisions);
         resultsFile.println("Steering decisions for " + name);
         for (SteeringDecision d : steeringDecisions ) {
             resultsFile.println(d.toString());
@@ -49,7 +36,7 @@ public class DronePlayer extends MultirotorClient implements Pursuer, Evader {
         for (Point2D point : path) {
             resultsFile.print("[" + point.getX() + "," + point.getY() + "],");
         }
-        resultsFile.print("]");
+        resultsFile.println("]");
     }
 
     public DronePlayer(String ip, String vehicle, double v) throws UnknownHostException {
@@ -65,6 +52,7 @@ public class DronePlayer extends MultirotorClient implements Pursuer, Evader {
 
     public void updatePositionData() {
         position = getPosition();
+        positionTime = System.currentTimeMillis();
         path.add(get2DPos());
     }
 
